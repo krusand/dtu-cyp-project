@@ -4,7 +4,7 @@
 defaults:
   - _self_
   - readout: mlp
-  - model: atom_jepa
+  - model: morgan_rdkit_mlp
 
 task: regression        # regression | classification
 data: data              # Output folder of prepare_data.py
