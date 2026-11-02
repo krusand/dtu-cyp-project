@@ -19,7 +19,7 @@ from sklearn.metrics import matthews_corrcoef, mean_absolute_error, r2_score, ro
 from models import MODELS
 from models.gbm import LightGBMModel
 from prepare_data import REG, CLS
-
+from tqdm import tqdm
 
 def masked_loss(pred, y, task, mean, std):
     mask = torch.isfinite(y)
@@ -100,7 +100,7 @@ def train_torch(cfg, train, val, targets, task, data, out):
     for epoch in range(1, cfg.train.epochs + 1):
         model.train()
         loss_sum, observed = 0., 0
-        for batch in train_loader:
+        for batch in tqdm(train_loader):
             y = batch['y'].to(model.device)
             loss = masked_loss(model(batch).float(), y, task, mean, std)
             if loss is None:
