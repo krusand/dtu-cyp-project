@@ -9,7 +9,7 @@ defaults:
 task: regression        # regression | classification
 data: data              # Output folder of prepare_data.py
 seed: 42
-device: mps
+device: cpu
 
 hydra:
   run:
