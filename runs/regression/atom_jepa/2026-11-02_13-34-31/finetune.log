@@ -1,0 +1,7 @@
+[2026-11-02 13:34:32,169][httpx2][INFO] - HTTP Request: GET https://huggingface.co/api/agent-harnesses "HTTP/1.1 200 OK"
+[2026-11-02 13:34:32,291][httpx2][INFO] - HTTP Request: HEAD https://huggingface.co/atom-jepa/atom-jepa/resolve/main/molecules/config.json "HTTP/1.1 307 Temporary Redirect"
+[2026-11-02 13:34:32,292][huggingface_hub.utils._http][WARNING] - Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+[2026-11-02 13:34:32,311][httpx2][INFO] - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/atom-jepa/atom-jepa/8f7514f49693d836ca26dfe0bbae10880f75690b/molecules%2Fconfig.json?%2Fatom-jepa%2Fatom-jepa%2Fresolve%2Fmain%2Fmolecules%2Fconfig.json=&etag=%226cb64adb26de2e2cb428cebafd2d190e5456b443%22 "HTTP/1.1 200 OK"
+[2026-11-02 13:34:32,336][httpx2][INFO] - HTTP Request: GET https://huggingface.co/api/resolve-cache/models/atom-jepa/atom-jepa/8f7514f49693d836ca26dfe0bbae10880f75690b/molecules%2Fconfig.json?%2Fatom-jepa%2Fatom-jepa%2Fresolve%2Fmain%2Fmolecules%2Fconfig.json=&etag=%226cb64adb26de2e2cb428cebafd2d190e5456b443%22 "HTTP/1.1 200 OK"
+[2026-11-02 13:34:32,472][httpx2][INFO] - HTTP Request: HEAD https://huggingface.co/atom-jepa/atom-jepa/resolve/main/molecules/model.safetensors "HTTP/1.1 302 Found"
+[2026-11-02 13:34:32,804][httpx2][INFO] - HTTP Request: GET https://huggingface.co/api/models/atom-jepa/atom-jepa/xet-read-token/8f7514f49693d836ca26dfe0bbae10880f75690b "HTTP/1.1 200 OK"

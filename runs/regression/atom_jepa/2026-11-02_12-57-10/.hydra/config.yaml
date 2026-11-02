@@ -1,0 +1,22 @@
+task: regression
+data: data
+seed: 42
+device: mps
+readout:
+  type: mlp
+  hidden_dim: 512
+  num_layers: 3
+  dropout: 0.1
+model:
+  name: atom_jepa
+  type: atom_jepa
+  checkpoint: molecules
+  precision: fp32
+  freeze_encoder: false
+  encoder_lr: 1.0e-05
+  readout_lr: 0.001
+train:
+  epochs: 20
+  batch_size: 8
+  weight_decay: 0.0001
+  grad_clip: 1.0

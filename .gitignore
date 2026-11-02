@@ -3,6 +3,8 @@
 __pycache__/
 *.pyc
 data/
-runs/
+*.csv
+*.pt
+
 outputs/*
 !outputs/.gitkeep
