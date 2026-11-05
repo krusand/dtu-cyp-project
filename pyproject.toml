@@ -34,12 +34,22 @@ cpu = [
 cu124 = [
   "torch==2.6.0",
 ]
+rocm = [
+  "torch==2.9.1+rocm7.2.1",
+  "torchaudio==2.9.1+rocm7.2.1",
+  "torchvision==0.24.1+rocm7.2.1",
+  "rocm-sdk-core==7.2.1",
+  "rocm-sdk-devel==7.2.1",
+  "rocm-sdk-libraries-custom==7.2.1",
+  "rocm==7.2.1",
+]
 
 [tool.uv]
 conflicts = [
   [
     { extra = "cpu" },
     { extra = "cu124" },
+    { extra = "rocm" },
   ],
 ]
 
@@ -47,8 +57,26 @@ conflicts = [
 torch = [
   { index = "pytorch-cpu", extra = "cpu" },
   { index = "pytorch-cu124", extra = "cu124" },
+  { url = "https://repo.radeon.com/rocm/windows/rocm-rel-7.2.1/torch-2.9.1%2Brocm7.2.1-cp312-cp312-win_amd64.whl", extra = "rocm" },
 ]
-
+torchaudio = [
+  { url = "https://repo.radeon.com/rocm/windows/rocm-rel-7.2.1/torchaudio-2.9.1%2Brocm7.2.1-cp312-cp312-win_amd64.whl", extra = "rocm" },
+]
+torchvision = [
+  { url = "https://repo.radeon.com/rocm/windows/rocm-rel-7.2.1/torchvision-0.24.1%2Brocm7.2.1-cp312-cp312-win_amd64.whl", extra = "rocm" },
+]
+rocm-sdk-core = [
+  { url = "https://repo.radeon.com/rocm/windows/rocm-rel-7.2.1/rocm_sdk_core-7.2.1-py3-none-win_amd64.whl", extra = "rocm" },
+]
+rocm-sdk-devel = [
+  { url = "https://repo.radeon.com/rocm/windows/rocm-rel-7.2.1/rocm_sdk_devel-7.2.1-py3-none-win_amd64.whl", extra = "rocm" },
+]
+rocm-sdk-libraries-custom = [
+  { url = "https://repo.radeon.com/rocm/windows/rocm-rel-7.2.1/rocm_sdk_libraries_custom-7.2.1-py3-none-win_amd64.whl", extra = "rocm" },
+]
+rocm = [
+  { url = "https://repo.radeon.com/rocm/windows/rocm-rel-7.2.1/rocm-7.2.1.tar.gz", extra = "rocm" },
+]
 
 [[tool.uv.index]]
 name = "pytorch-cpu"
