@@ -1,0 +1,5 @@
+# MLP BN from embedding to predictions. Paper: https://arxiv.org/pdf/2211.04952
+type: mlp
+hidden_dim: 512
+num_layers: 3     # Linear layers, including the output layer
+dropout: 0.1
