@@ -9,7 +9,7 @@ model:
     radius: 2
     n_bits: 1024
     use_counts: true
-  feature_workers: 4
+  feature_workers: 1
   early_stopping_rounds: 200
   params:                 # Passed to LGBMRegressor / LGBMClassifier
     n_estimators: 5000
@@ -20,4 +20,4 @@ model:
     subsample_freq: 1
     colsample_bytree: 0.3
     reg_lambda: 1.0
-    n_jobs: 4
+    n_jobs: 1
