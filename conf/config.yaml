@@ -4,12 +4,12 @@
 defaults:
   - _self_
   - readout: mlp
-  - model: morgan_rdkit_mlp
+  - model: atom_jepa
 
 task: regression        # regression | classification
 data: data              # Output folder of prepare_data.py
 seed: 42
-device: cpu
+device: cuda
 
 hydra:
   run:
