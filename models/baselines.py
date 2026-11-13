@@ -80,7 +80,7 @@ class Features(Dataset):
 
 
 class FeatureModel(nn.Module):
-    def __init__(self, cfg, readout, n_targets, data_dir, device):
+    def __init__(self, cfg, readout, n_targets, data_dir, device, task):
         super().__init__()
         self.cfg, self.folder = cfg, data_dir / 'features'
         self.kwargs = {n: OmegaConf.to_container(cfg[n]) if n in cfg else {} for n in cfg.featurizers}

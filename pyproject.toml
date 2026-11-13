@@ -8,6 +8,7 @@ authors = [
 ]
 requires-python = ">=3.12"
 dependencies = [
+    "accelerate>=1.15.0",
     "atom-jepa[rdkit]==0.3.0",
     "descriptastorus==2.8.0",
     "e3nn==0.5.8",
@@ -16,6 +17,7 @@ dependencies = [
     "pandas>=2.2,<3",
     "rdkit>=2025.3.1",
     "scikit-learn>=1.5,<2",
+    "simpletransformers>=0.70.8",
     "six>=1.17.0",
 ]
 
