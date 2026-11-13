@@ -97,10 +97,10 @@ def train_torch(cfg, train, val, targets, task, data, out):
     val_loader = model.loader(val, targets, batch_size)
     optimizer = torch.optim.AdamW(model.param_groups(), weight_decay=cfg.train.weight_decay)
     best = float('inf')
-    for epoch in range(1, cfg.train.epochs + 1):
+    for epoch in tqdm(range(1, cfg.train.epochs + 1)):
         model.train()
         loss_sum, observed = 0., 0
-        for batch in tqdm(train_loader):
+        for batch in train_loader:
             y = batch['y'].to(model.device)
             loss = masked_loss(model(batch).float(), y, task, mean, std)
             if loss is None:
@@ -128,6 +128,11 @@ def train_torch(cfg, train, val, targets, task, data, out):
             best = selection
             torch.save({'model': model.state_dict(), 'mean': mean, 'std': std,
                         'epoch': epoch, 'config': cfg_dict(cfg)}, out / 'best.pt')
+        if cfg.device == 'cuda':
+            peak_gb = torch.cuda.max_memory_allocated() / (1024 ** 3)
+            reserved_gb = torch.cuda.max_memory_reserved() / (1024 ** 3)
+            print(f"Peak tensor memory: {peak_gb:.2f} GB | Peak reserved by PyTorch: {reserved_gb:.2f} GB")
+
     saved = torch.load(out / 'best.pt', map_location=model.device, weights_only=True)
     model.load_state_dict(saved['model'])
     mean, std = saved['mean'], saved['std']
@@ -141,6 +146,9 @@ def cfg_dict(cfg):
 
 @hydra.main(config_path='conf', config_name='config', version_base='1.3')
 def main(cfg):
+    print(cfg)
+    if cfg.device == 'cuda':
+        torch.cuda.reset_peak_memory_stats()
     if cfg.task not in ('regression', 'classification'):
         raise ValueError(f'Unknown task {cfg.task!r}')
     out = Path(HydraConfig.get().runtime.output_dir)
@@ -207,6 +215,12 @@ def main(cfg):
     output[targets] = predictions
     output.to_csv(out / 'test_predictions.csv', index=False)
     print(f'Held-out test metrics: {test_scores}')
+
+    if cfg.device == 'cuda':
+        peak_gb = torch.cuda.max_memory_allocated() / (1024 ** 3)
+        reserved_gb = torch.cuda.max_memory_reserved() / (1024 ** 3)
+        print(f"Peak tensor memory: {peak_gb:.2f} GB | Peak reserved by PyTorch: {reserved_gb:.2f} GB")
+
 
 if __name__ == '__main__':
     main()

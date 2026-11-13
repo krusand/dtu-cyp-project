@@ -13,6 +13,6 @@ device: cuda
 
 hydra:
   run:
-    dir: runs/${task}/${model.name}/${now:%Y-%m-%d_%H-%M-%S}
+    dir: hpc_runs/${task}/${model.name}/${now:%Y-%m-%d_%H-%M-%S}
   job:
     chdir: false

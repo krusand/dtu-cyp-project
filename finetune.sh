@@ -1,18 +1,21 @@
 #!/bin/bash
-#BSUB -q hpc
+#BSUB -q gpuv100
 #BSUB -J cyp_finetune
 #BSUB -u s253844@dtu.dk
 #BSUB -B
 #BSUB -N
 #BSUB -n 4
 #BSUB -R "span[hosts=1]"
-#BSUB -R "rusage[mem=8GB]"
+#BSUB -R "rusage[mem=1GB]"
 #BSUB -gpu "num=1:mode=exclusive_process"
-#BSUB -W 04:00
+#BSUB -W 10:00
 #BSUB -o outputs/cyp_%J.out
 #BSUB -e outputs/cyp_%J.err
 set -euo pipefail
 pwd
+
+# Setup UV environment
+export UV_CACHE_DIR="${UV_CACHE_DIR:-$BLACKHOLE/dtu-cyp-project/.uv_cache}"
 uv sync --extra cu124
 
 # Choose the model and task at submission (LSF only passes variables given with -env):
@@ -23,6 +26,10 @@ uv sync --extra cu124
 MODEL="${MODEL:-atom_jepa}"
 TASK="${TASK:-regression}"
 OVERRIDES="${OVERRIDES:-}"
+
+echo "$MODEL"
+echo "$TASK"
+echo "$OVERRIDES"
 
 # Submit from the starter directory. Set up this venv BEFORE submitting.
 
