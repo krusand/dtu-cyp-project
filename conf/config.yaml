@@ -4,15 +4,15 @@
 defaults:
   - _self_
   - readout: mlp
-  - model: chemberta 
+  - model: atom_jepa 
 
 task: regression # regression | classification
 data: data              # Output folder of prepare_data.py
 seed: 42
-device: cpu
+device: mps
 
 hydra:
   run:
-    dir: hpc_runs/${task}/${model.name}/${now:%Y-%m-%d_%H-%M-%S}
+    dir: runs/${task}/${model.name}/${now:%Y-%m-%d_%H-%M-%S}
   job:
     chdir: false
