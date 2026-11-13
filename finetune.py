@@ -16,10 +16,13 @@ import pandas as pd
 import torch
 from torch import nn
 from sklearn.metrics import matthews_corrcoef, mean_absolute_error, r2_score, roc_auc_score, average_precision_score
+from tqdm import tqdm
+import os
+
 from models import MODELS
 from models.gbm import LightGBMModel
 from prepare_data import REG, CLS
-from tqdm import tqdm
+
 
 def masked_loss(pred, y, task, mean, std, model_name):
     mask = torch.isfinite(y)
@@ -70,9 +73,22 @@ def predict(model, loader, task, mean, std):
     model.eval()
     out = []
     for batch in loader:
-        p = model(batch)
-        p = p * std + mean if task == 'regression' else p.sigmoid()
-        out.append(p.float().cpu().numpy())
+        num_conformers = batch["atomic_numbers"].shape[1]
+        conf_preds = []
+        for c in range(num_conformers):
+            sub_batch = dict(batch)
+            sub_batch["atomic_numbers"] = batch["atomic_numbers"][:, c]
+            sub_batch["node_coordinates"] = batch["node_coordinates"][:, c*3:(c*3+3)]
+
+            p = model(sub_batch)
+            p = p * std + mean if task == 'regression' else p.sigmoid()
+            print(f"{p=}")
+            conf_preds.append(p)
+        p_stack = torch.stack(conf_preds, dim=0)
+        p_avg = p_stack.mean(dim=0)
+        print(f"{p_stack=}")
+        print(f"{p_avg=}")
+        out.append(p_avg.float().cpu().numpy())
     values = np.concatenate(out)
     if not np.isfinite(values).all():
         raise RuntimeError('Nonfinite predictions')
@@ -100,7 +116,7 @@ def train_torch(cfg, train, val, targets, task, data, out):
     for epoch in tqdm(range(1, cfg.train.epochs + 1)):
         model.train()
         loss_sum, observed = 0., 0
-        for batch in train_loader:
+        for batch in tqdm(train_loader):
             y = batch['y'].to(model.device)
             loss = masked_loss(model(batch).float(), y, task, mean, std, cfg.model.name)
             if loss is None:
@@ -143,6 +159,18 @@ def train_torch(cfg, train, val, targets, task, data, out):
 def cfg_dict(cfg):
     return OmegaConf.to_container(cfg, resolve=True)
 
+def is_num_conformers_larger_than_num_conformers_in_data(cfg) -> bool:
+    key = os.listdir(Path(cfg.data) / "conformers")[0]
+    with np.load(Path(cfg.data) / "conformers" / key) as d:
+        num_conformers_in_file = d['z'].shape[1]
+    return True if cfg.model.num_conformers > num_conformers_in_file else False
+
+def load_data(cfg, split):
+    data = pd.read_csv(Path(cfg.data) / cfg.task / f'{split}.csv')
+    n = len(data)
+    return data.iloc[:int(n*cfg.frac_data)]
+
+
 
 @hydra.main(config_path='conf', config_name='config', version_base='1.3')
 def main(cfg):
@@ -151,6 +179,9 @@ def main(cfg):
         torch.cuda.reset_peak_memory_stats()
     if cfg.task not in ('regression', 'classification'):
         raise ValueError(f'Unknown task {cfg.task!r}')
+    if is_num_conformers_larger_than_num_conformers_in_data(cfg):
+        raise ValueError(f'num_conformers larger than number of conformers in data, rerun prepare_data.py with more conformers')
+    
     out = Path(HydraConfig.get().runtime.output_dir)
     data = Path(cfg.data)
     random.seed(cfg.seed)
@@ -159,8 +190,8 @@ def main(cfg):
     torch.cuda.manual_seed_all(cfg.seed)
     task = cfg.task
     targets = REG if task == 'regression' else CLS
-    train_all = pd.read_csv(data / task / 'train.csv')
-    val_all = pd.read_csv(data / task / 'val.csv')
+    train_all = load_data(cfg, 'train')
+    val_all = load_data(cfg, 'val')
     frame = pd.concat([train_all, val_all], ignore_index=True)
     train = train_all[train_all[targets].notna().any(axis=1)].copy()
     val = val_all[val_all[targets].notna().any(axis=1)].copy()
@@ -196,13 +227,14 @@ def main(cfg):
         predict_frame = model.predict
     else:
         predict_frame = train_torch(cfg, train, val, targets, task, data, out)
+
     validation_predictions = predict_frame(val)
     (out / 'validation_metrics.json').write_text(json.dumps(metrics(val, validation_predictions, targets, task), indent=2))
     vp = val[['SMILES', 'Molecule_Name']].copy()
     vp[targets] = validation_predictions
     vp.to_csv(out / 'validation_predictions.csv', index=False)
     # Only now load and evaluate the held-out labelled test split.
-    test = pd.read_csv(data / task / 'test.csv')
+    test = load_data(cfg, 'val')
     if not len(test):
         raise ValueError('Empty test set')
     if set(frame.canonical_smiles) & set(test.canonical_smiles):

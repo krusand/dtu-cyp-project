@@ -8,23 +8,29 @@ from models.readouts import build_readout
 
 
 class Conformers(Dataset):
-    def __init__(self, frame, folder, targets):
+    def __init__(self, frame, folder, targets, num_conformers):
         self.frame, self.folder = frame.reset_index(drop=True), folder
         self.y = frame.reindex(columns=targets).to_numpy(dtype=np.float32)
+        self.split = frame["split"].iloc[0]
+        self.num_conformers=num_conformers
 
     def __len__(self):
         return len(self.frame)
 
     def __getitem__(self, i):
-        with np.load(self.folder / f'{self.frame.iloc[i].key}.npz') as d:
-            num_conformers_in_file = d['z'].shape[1]
-            sample_idx = np.random.randint(0, num_conformers_in_file)
-            pos_sample_from_idx = sample_idx*3
-            pos_sample_to_idx = sample_idx*3+3
-
-            return {'atomic_numbers': torch.tensor(d['z'][:,sample_idx], dtype=torch.long),
-                    'node_coordinates': torch.tensor(d['pos'][:, pos_sample_from_idx:pos_sample_to_idx], dtype=torch.float32),
-                    'y': torch.tensor(self.y[i])}
+        if self.split == 'train':
+            with np.load(self.folder / f'{self.frame.iloc[i].key}.npz') as d:
+                sample_idx = np.random.randint(0, self.num_conformers)
+                pos_sample_from_idx = sample_idx*3
+                pos_sample_to_idx = sample_idx*3+3
+                return {'atomic_numbers': torch.tensor(d['z'][:,sample_idx], dtype=torch.long),
+                        'node_coordinates': torch.tensor(d['pos'][:, pos_sample_from_idx:pos_sample_to_idx], dtype=torch.float32),
+                        'y': torch.tensor(self.y[i])}
+        else:
+            with np.load(self.folder / f'{self.frame.iloc[i].key}.npz') as d:
+                return {'atomic_numbers': torch.tensor(d['z'], dtype=torch.long),
+                        'node_coordinates': torch.tensor(d['pos'], dtype=torch.float32),
+                        'y': torch.tensor(self.y[i])}
 
 
 class AtomJEPAModel(nn.Module):
@@ -51,7 +57,7 @@ class AtomJEPAModel(nn.Module):
         pass
 
     def loader(self, frame, targets, batch_size, shuffle=False):
-        return DataLoader(Conformers(frame, self.folder, targets), batch_size=batch_size,
+        return DataLoader(Conformers(frame, self.folder, targets, self.cfg.num_conformers), batch_size=batch_size,
                           shuffle=shuffle, collate_fn=self.encoder.collate, num_workers=0)
 
     def param_groups(self):

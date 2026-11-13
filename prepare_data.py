@@ -25,18 +25,18 @@ TASK_LABELS = {'regression': REG, 'classification': CLS}
 
 
 def conformer(job):
-    key, smiles, folder, seed = job
+    key, smiles, folder, seed, num_conformers = job
     path = Path(folder) / f'{key}.npz'
     if path.exists():
         return key, ''
     try:
         # Use the original SMILES and the upstream defaults, without retries or centering.
-        samples = smiles_to_samples(smiles, num_conformers=1, seed=seed, mmff_max_iters=500)
+        samples = smiles_to_samples(smiles, num_conformers=num_conformers, seed=seed, mmff_max_iters=500)
 
         zs = np.column_stack([sample["atomic_numbers"].numpy() for sample in samples])
         poss = np.column_stack([sample["node_coordinates"].numpy() for sample in samples])
-        
-        np.savez_compressed(path, 
+  
+        np.savez_compressed(path,
                             z=zs,
                             pos=poss)
         return key, ''
@@ -79,7 +79,8 @@ def main():
     p.add_argument('--seed', type=int, default=42)
     p.add_argument('--val-fraction', type=float, default=.15)
     p.add_argument('--test-fraction', type=float, default=.15)
-    p.add_argument('--limit', type=int, help='Small preparation smoke test only: first N rows')
+    p.add_argument('--num-conformers', type=int, help='Number of conformers per molecule', default=1)
+    p.add_argument('--limit', type=int, help='Small preparation smoke test only: first N rows')    
     args = p.parse_args()
     if (args.workers < 1 or not 0 <= args.seed < 2**31 - 1 or
         min(args.val_fraction, args.test_fraction) <= 0 or
@@ -133,7 +134,7 @@ def main():
     folder = args.out / 'conformers'
     folder.mkdir(exist_ok=True)
     unique = frame.drop_duplicates('key')
-    work = [(r.key, r.SMILES, str(folder), args.seed) for r in unique.itertuples()]
+    work = [(r.key, r.SMILES, str(folder), args.seed, args.num_conformers) for r in unique.itertuples()]
     results = []
     with ProcessPoolExecutor(max_workers=args.workers) as pool:
         for i, result in enumerate(pool.map(conformer, work), 1):
