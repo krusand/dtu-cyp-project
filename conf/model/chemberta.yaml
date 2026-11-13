@@ -1,0 +1,16 @@
+# @package _global_
+defaults:
+  - override /readout: mlp
+
+model:
+  name: chemberta
+  type: chemberta
+  encoder_lr: 1.0e-5
+  readout_lr: 1.0e-1
+  freeze_encoder: False 
+
+train:
+  epochs: 20
+  batch_size: 16
+  weight_decay: 1.0e-4
+  grad_clip: 1.0

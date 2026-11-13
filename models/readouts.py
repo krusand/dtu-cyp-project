@@ -28,8 +28,23 @@ class MLPReadout(nn.Module):
     def forward(self, x):
         return self.mlp(x)
 
+class MLPBNReadout(nn.Module):
+    """num_layers Linear layers (including the output layer) with ReLU and dropout."""
 
-READOUTS = {'linear': LinearReadout, 'mlp': MLPReadout}
+    def __init__(self, in_dim, n_targets, hidden_dim=512, num_layers=3, dropout=0.1):
+        super().__init__()
+        dims = [in_dim] + [hidden_dim] * (num_layers - 1)
+        layers = []
+        for a, b in zip(dims[:-1], dims[1:]):
+            layers += [nn.Linear(a, b), nn.BatchNorm1d(b), nn.ReLU(), nn.Dropout(dropout)]
+        self.mlp = nn.Sequential(*layers, nn.Linear(dims[-1], n_targets))
+
+    def forward(self, x):
+        return self.mlp(x)
+
+
+
+READOUTS = {'linear': LinearReadout, 'mlp': MLPReadout, 'mlp_bn': MLPBNReadout}
 
 
 def build_readout(cfg, in_dim, n_targets):

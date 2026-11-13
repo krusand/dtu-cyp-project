@@ -6,13 +6,13 @@ defaults:
   - readout: mlp
   - model: chemberta 
 
-task: classification # regression | classification
+task: regression # regression | classification
 data: data              # Output folder of prepare_data.py
 seed: 42
 device: cpu
 
 hydra:
   run:
-    dir: runs/${task}/${model.name}/${now:%Y-%m-%d_%H-%M-%S}
+    dir: hpc_runs/${task}/${model.name}/${now:%Y-%m-%d_%H-%M-%S}
   job:
     chdir: false

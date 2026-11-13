@@ -7,6 +7,8 @@ data/
 *.pt
 *.log
 *.yaml
+!conf/*.yaml
+!conf/**/*.yaml
 
 outputs/*
 !outputs/.gitkeep
