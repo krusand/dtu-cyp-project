@@ -1,0 +1,27 @@
+task: regression
+data: data
+seed: 42
+device: cpu
+readout:
+  type: mlp
+  hidden_dim: 256
+  num_layers: 3
+  dropout: 0.3
+model:
+  name: morgan_rdkit_mlp
+  type: features
+  featurizers:
+  - morgan
+  - rdkit
+  morgan:
+    radius: 2
+    n_bits: 1024
+    use_counts: true
+  scaling: quantile
+  readout_lr: 0.001
+  feature_workers: 4
+train:
+  epochs: 100
+  batch_size: 64
+  weight_decay: 0.01
+  grad_clip: 10.0

@@ -1,0 +1,2 @@
+- model=morgan_rdkit_mlp
+- task=regression
