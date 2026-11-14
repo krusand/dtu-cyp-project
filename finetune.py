@@ -76,9 +76,8 @@ def metrics(frame, predictions, targets, task):
         if all(s is not None and np.isfinite(s) for s in scores) else None)
     return result
 
-
 @torch.no_grad()
-def predict(model, loader, task, mean, std, cfg):
+def predict_atom_jepa(model, loader, task, mean, std, cfg):
     model.eval()
     out = []
     num_conformers = cfg.model.num_conformers
@@ -109,6 +108,22 @@ def predict(model, loader, task, mean, std, cfg):
     if not np.isfinite(values).all():
         raise RuntimeError('Nonfinite predictions')
     print(f"{values=}")
+    return values
+
+@torch.no_grad()
+def predict(model, loader, task, mean, std, cfg):
+    if cfg.model.name == 'atom_jepa':
+        return predict_atom_jepa(model, loader, task, mean, std, cfg)
+
+    model.eval()
+    out = []
+    for batch in loader:
+        p = model(batch)
+        p = p * std + mean if task == 'regression' else p.sigmoid()
+        out.append(p.float().cpu().numpy())
+    values = np.concatenate(out)
+    if not np.isfinite(values).all():
+        raise RuntimeError('Nonfinite predictions')
     return values
 
 
@@ -178,6 +193,8 @@ def cfg_dict(cfg):
     return OmegaConf.to_container(cfg, resolve=True)
 
 def is_num_conformers_larger_than_num_conformers_in_data(cfg) -> bool:
+    if cfg.model.name != 'atom_jepa':
+        return False
     key = os.listdir(Path(cfg.data) / "conformers")[0]
     with np.load(Path(cfg.data) / "conformers" / key) as d:
         num_conformers_in_file = d['z'].shape[1]

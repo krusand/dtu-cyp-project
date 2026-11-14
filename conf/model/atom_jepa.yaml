@@ -11,7 +11,7 @@ model:
   freeze_encoder: false   # true trains only the readout head
   encoder_lr: 1.0e-5
   readout_lr: 1.0e-3
-  num_conformers: 2
+  num_conformers: 1
 
 train:
   epochs: 2
