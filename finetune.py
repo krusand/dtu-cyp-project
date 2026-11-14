@@ -36,14 +36,20 @@ def masked_loss(pred, y, task, mean, std, model_name):
 
 def metrics(frame, predictions, targets, task):
     result = {}
+    
     for j, target in enumerate(targets):
+        print(f"{target=}")
         y = frame[target].to_numpy(dtype=float)
         mask = np.isfinite(y)
         y, pred = y[mask], predictions[mask, j]
+        print(f"{y=}")
+        print(f"{pred=}")
         if not len(y):
+            print(f"{not len(y) = }")
             result[target] = {'n': 0, ('ST-RAE' if task == 'regression' else 'MCC'): None}
             continue
         if task == 'regression':
+            print("Task = regression")
             low = frame[target + '_conf_low'].to_numpy(dtype=float)[mask]
             high = frame[target + '_conf_high'].to_numpy(dtype=float)[mask]
             if not (np.isfinite(low).all() and np.isfinite(high).all() and (low <= high).all()):
@@ -63,23 +69,33 @@ def metrics(frame, predictions, targets, task):
     primary = 'ST-RAE' if task == 'regression' else 'MCC'
     scores = [result[t][primary] for t in targets]
     # Do not silently omit an endpoint when reporting a macro score.
+    print(f"{result=}")
+    for s in scores:
+        print(f"{s=}")
     result['macro_' + primary] = (float(np.mean(scores))
         if all(s is not None and np.isfinite(s) for s in scores) else None)
     return result
 
 
 @torch.no_grad()
-def predict(model, loader, task, mean, std):
+def predict(model, loader, task, mean, std, cfg):
     model.eval()
     out = []
+    num_conformers = cfg.model.num_conformers
+    print(f"{num_conformers=}")
     for batch in loader:
-        num_conformers = batch["atomic_numbers"].shape[1]
+        num_conformers_in_batch = batch['atomic_numbers'].shape[1]
         conf_preds = []
         for c in range(num_conformers):
             sub_batch = dict(batch)
             sub_batch["atomic_numbers"] = batch["atomic_numbers"][:, c]
             sub_batch["node_coordinates"] = batch["node_coordinates"][:, c*3:(c*3+3)]
-
+            
+            if 'edge_vectors' in batch and batch['edge_vectors'].shape[1] == num_conformers_in_batch * 3:
+                sub_batch['edge_vectors'] = batch['edge_vectors'][:, c*3:(c*3+3)]
+            if 'edge_lengths' in batch and batch['edge_lengths'].ndim == 2:
+                sub_batch['edge_lengths'] = batch['edge_lengths'][:, c]
+            
             p = model(sub_batch)
             p = p * std + mean if task == 'regression' else p.sigmoid()
             print(f"{p=}")
@@ -92,6 +108,7 @@ def predict(model, loader, task, mean, std):
     values = np.concatenate(out)
     if not np.isfinite(values).all():
         raise RuntimeError('Nonfinite predictions')
+    print(f"{values=}")
     return values
 
 
@@ -131,7 +148,8 @@ def train_torch(cfg, train, val, targets, task, data, out):
             n = int(torch.isfinite(y).sum())
             loss_sum += loss.item() * n
             observed += n
-        score = metrics(val, predict(model, val_loader, task, mean, std), targets, task)
+        score = metrics(val, predict(model, val_loader, task, mean, std, cfg), targets, task)
+        print(f"{score=}")
         primary = score['macro_ST-RAE' if task == 'regression' else 'macro_MCC']
         if primary is None:
             raise ValueError('Validation metric undefined; check endpoint coverage and split')
@@ -153,7 +171,7 @@ def train_torch(cfg, train, val, targets, task, data, out):
     model.load_state_dict(saved['model'])
     mean, std = saved['mean'], saved['std']
     print(f'Best epoch: {saved["epoch"]}', flush=True)
-    return lambda frame: predict(model, model.loader(frame, targets, batch_size), task, mean, std)
+    return lambda frame: predict(model, model.loader(frame, targets, batch_size), task, mean, std, cfg)
 
 
 def cfg_dict(cfg):
@@ -234,7 +252,7 @@ def main(cfg):
     vp[targets] = validation_predictions
     vp.to_csv(out / 'validation_predictions.csv', index=False)
     # Only now load and evaluate the held-out labelled test split.
-    test = load_data(cfg, 'val')
+    test = load_data(cfg, 'test')
     if not len(test):
         raise ValueError('Empty test set')
     if set(frame.canonical_smiles) & set(test.canonical_smiles):
