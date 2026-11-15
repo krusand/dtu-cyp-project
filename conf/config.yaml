@@ -9,8 +9,8 @@ defaults:
 task: regression # regression | classification
 data: data              # Output folder of prepare_data.py
 seed: 42
-device: mps
-frac_data: 0.1
+device: cuda
+frac_data: 1
 
 hydra:
   run:

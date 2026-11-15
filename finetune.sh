@@ -8,7 +8,7 @@
 #BSUB -R "span[hosts=1]"
 #BSUB -R "rusage[mem=1GB]"
 #BSUB -gpu "num=1:mode=exclusive_process"
-#BSUB -W 10:00
+#BSUB -W 11:00
 #BSUB -o outputs/cyp_%J.out
 #BSUB -e outputs/cyp_%J.err
 set -euo pipefail

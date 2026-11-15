@@ -38,18 +38,13 @@ def metrics(frame, predictions, targets, task):
     result = {}
     
     for j, target in enumerate(targets):
-        print(f"{target=}")
         y = frame[target].to_numpy(dtype=float)
         mask = np.isfinite(y)
         y, pred = y[mask], predictions[mask, j]
-        print(f"{y=}")
-        print(f"{pred=}")
         if not len(y):
-            print(f"{not len(y) = }")
             result[target] = {'n': 0, ('ST-RAE' if task == 'regression' else 'MCC'): None}
             continue
         if task == 'regression':
-            print("Task = regression")
             low = frame[target + '_conf_low'].to_numpy(dtype=float)[mask]
             high = frame[target + '_conf_high'].to_numpy(dtype=float)[mask]
             if not (np.isfinite(low).all() and np.isfinite(high).all() and (low <= high).all()):
@@ -69,9 +64,6 @@ def metrics(frame, predictions, targets, task):
     primary = 'ST-RAE' if task == 'regression' else 'MCC'
     scores = [result[t][primary] for t in targets]
     # Do not silently omit an endpoint when reporting a macro score.
-    print(f"{result=}")
-    for s in scores:
-        print(f"{s=}")
     result['macro_' + primary] = (float(np.mean(scores))
         if all(s is not None and np.isfinite(s) for s in scores) else None)
     return result
@@ -81,7 +73,6 @@ def predict_atom_jepa(model, loader, task, mean, std, cfg):
     model.eval()
     out = []
     num_conformers = cfg.model.num_conformers
-    print(f"{num_conformers=}")
     for batch in loader:
         num_conformers_in_batch = batch['atomic_numbers'].shape[1]
         conf_preds = []
@@ -97,17 +88,13 @@ def predict_atom_jepa(model, loader, task, mean, std, cfg):
             
             p = model(sub_batch)
             p = p * std + mean if task == 'regression' else p.sigmoid()
-            print(f"{p=}")
             conf_preds.append(p)
         p_stack = torch.stack(conf_preds, dim=0)
         p_avg = p_stack.mean(dim=0)
-        print(f"{p_stack=}")
-        print(f"{p_avg=}")
         out.append(p_avg.float().cpu().numpy())
     values = np.concatenate(out)
     if not np.isfinite(values).all():
         raise RuntimeError('Nonfinite predictions')
-    print(f"{values=}")
     return values
 
 @torch.no_grad()
@@ -164,7 +151,6 @@ def train_torch(cfg, train, val, targets, task, data, out):
             loss_sum += loss.item() * n
             observed += n
         score = metrics(val, predict(model, val_loader, task, mean, std, cfg), targets, task)
-        print(f"{score=}")
         primary = score['macro_ST-RAE' if task == 'regression' else 'macro_MCC']
         if primary is None:
             raise ValueError('Validation metric undefined; check endpoint coverage and split')
