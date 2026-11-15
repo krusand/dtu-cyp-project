@@ -73,19 +73,9 @@ def predict_atom_jepa(model, loader, task, mean, std, cfg):
     model.eval()
     out = []
     num_conformers = cfg.model.num_conformers
-    for batch in loader:
-        num_conformers_in_batch = batch['atomic_numbers'].shape[1]
+    for batch_per_conformer in loader:
         conf_preds = []
-        for c in range(num_conformers):
-            sub_batch = dict(batch)
-            sub_batch["atomic_numbers"] = batch["atomic_numbers"][:, c]
-            sub_batch["node_coordinates"] = batch["node_coordinates"][:, c*3:(c*3+3)]
-            
-            if 'edge_vectors' in batch and batch['edge_vectors'].shape[1] == num_conformers_in_batch * 3:
-                sub_batch['edge_vectors'] = batch['edge_vectors'][:, c*3:(c*3+3)]
-            if 'edge_lengths' in batch and batch['edge_lengths'].ndim == 2:
-                sub_batch['edge_lengths'] = batch['edge_lengths'][:, c]
-            
+        for sub_batch in batch_per_conformer:
             p = model(sub_batch)
             p = p * std + mean if task == 'regression' else p.sigmoid()
             conf_preds.append(p)
@@ -132,7 +122,7 @@ def train_torch(cfg, train, val, targets, task, data, out):
     val_loader = model.loader(val, targets, batch_size)
     optimizer = torch.optim.AdamW(model.param_groups(), weight_decay=cfg.train.weight_decay)
     best = float('inf')
-    for epoch in tqdm(range(1, cfg.train.epochs + 1)):
+    for epoch in range(1, cfg.train.epochs + 1):
         model.train()
         loss_sum, observed = 0., 0
         for batch in tqdm(train_loader):
@@ -184,6 +174,7 @@ def is_num_conformers_larger_than_num_conformers_in_data(cfg) -> bool:
     key = os.listdir(Path(cfg.data) / "conformers")[0]
     with np.load(Path(cfg.data) / "conformers" / key) as d:
         num_conformers_in_file = d['z'].shape[1]
+        print(f"Number of conformers in file: {num_conformers_in_file}")
     return True if cfg.model.num_conformers > num_conformers_in_file else False
 
 def load_data(cfg, split):
