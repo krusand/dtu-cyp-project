@@ -5,7 +5,7 @@ from torch import nn
 from torch.utils.data import DataLoader, Dataset
 from atom_jepa import AtomJEPA
 from models.readouts import build_readout
-
+from loguru import logger
 
 class Conformers(Dataset):
     def __init__(self, frame, folder, targets, num_conformers):
@@ -37,6 +37,7 @@ class Conformers(Dataset):
                     confs.append({'atomic_numbers': torch.tensor(z[:,idx], dtype=torch.long),
                         'node_coordinates': torch.tensor(pos[:, idx*3:idx*3+3], dtype=torch.float32),
                         'y': torch.tensor(self.y[i])})
+                return confs
 
 
 class AtomJEPAModel(nn.Module):
@@ -63,11 +64,10 @@ class AtomJEPAModel(nn.Module):
         pass
 
     def _collate_fn(self, batch_list):
-        collated = []
-        for mol_confs in batch_list:
-            for c in range(self.cfg.num_conformers):
-                collated.append(self.encoder.collate([mol_confs[c]]))
-        return collated
+        return [
+            self.encoder.collate([mol_confs[c] for mol_confs in batch_list])
+            for c in range(self.cfg.num_conformers)
+        ]
 
     def loader(self, frame, targets, batch_size, shuffle=False):
         dataset = Conformers(frame, self.folder, targets, self.cfg.num_conformers)
