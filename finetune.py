@@ -202,19 +202,20 @@ def main(cfg):
     vp[targets] = validation_predictions
     vp.to_csv(out / 'validation_predictions.csv', index=False)
     # Only now load and evaluate the held-out labelled test split.
-    test = pd.read_csv(data / task / 'test.csv')
-    if not len(test):
-        raise ValueError('Empty test set')
-    if set(frame.canonical_smiles) & set(test.canonical_smiles):
-        raise ValueError('Exact molecule leakage into the test split')
-    predictions = predict_frame(test)
-    test_scores = metrics(test, predictions, targets, task)
-    (out / 'test_metrics.json').write_text(json.dumps(test_scores, indent=2))
-    # Classification exports probabilities; metrics use a fixed 0.5 threshold.
-    output = test[['SMILES', 'Molecule_Name']].copy()
-    output[targets] = predictions
-    output.to_csv(out / 'test_predictions.csv', index=False)
-    print(f'Held-out test metrics: {test_scores}')
+    if cfg.get('eval_test', False):
+        test = pd.read_csv(data / task / 'test.csv')
+        if not len(test):
+            raise ValueError('Empty test set')
+        if set(frame.canonical_smiles) & set(test.canonical_smiles):
+            raise ValueError('Exact molecule leakage into the test split')
+        predictions = predict_frame(test)
+        test_scores = metrics(test, predictions, targets, task)
+        (out / 'test_metrics.json').write_text(json.dumps(test_scores, indent=2))
+        # Classification exports probabilities; metrics use a fixed 0.5 threshold.
+        output = test[['SMILES', 'Molecule_Name']].copy()
+        output[targets] = predictions
+        output.to_csv(out / 'test_predictions.csv', index=False)
+        print(f'Held-out test metrics: {test_scores}')
 
     if cfg.device == 'cuda':
         peak_gb = torch.cuda.max_memory_allocated() / (1024 ** 3)
