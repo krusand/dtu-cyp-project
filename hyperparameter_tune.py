@@ -16,13 +16,12 @@ config_atom = {
 
 config_chemberta = {
     "model": ["chemberta"],
-    "+readout_lr": [1e-3, 1e-4],
-    "+batch_size": [16],
+    "+readout_lr": [1e-3, 1e-4, 1e-5, 1e-6],
+    "+batch_size": [8, 16, 32],
     "+dropout": [0.1, 0.3, 0.5],
-    "+encoder_lr": [1e-5, 5e-06],
+    "+encoder_lr": [1e-3, 1e-4, 1e-5, 1e-6],
     "+freeze_encoder": [True, False],
-    "+weight_decay": [1.0e-3, 1.0e-4, 1.0e-5],
-    "+num_conformers": [1, 2, 5],
+    "+weight_decay": [1.0e-1, 1.0e-2, 1.0e-3, 1.0e-4, 1.0e-5, 1.0e-6],
     "task": ["regression", "classfication"],
     "readout": ["linear", "mlp", "mlpbn"]
 }
