@@ -2,6 +2,7 @@ from itertools import product
 from subprocess import call, run
 
 config = {
+    "model": ["atom_jepa"],
     "readout_lr": [1e-3, 1e-4],
     "batch_size": [16],
     "dropout": [0.1, 0.3, 0.5],
