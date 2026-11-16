@@ -1,5 +1,7 @@
 from itertools import product
-from subprocess import call, run
+from subprocess import run
+import textwrap
+
 
 config_atom_tier1 = {
     "model": ["atom_jepa"],
@@ -7,7 +9,7 @@ config_atom_tier1 = {
     "+batch_size": [16],
     "+dropout": [0.1, 0.3, 0.5],
     "+encoder_lr": [1e-3, 1e-4, 1e-5, 1e-6],
-    "task": ["classfication", "regression"],
+    "task": ["classification", "regression"],
 }
 
 config_atom_tier2 = {
@@ -50,19 +52,19 @@ keys, values = zip(*config.items())
 result = [dict(zip(keys, p)) for p in product(*values)]
 
 print(f"Len of the result {len(result)}")
-exit()
 
-for d in result:
-    
+for i, d in enumerate(result[:2]):
+
+
     overrides_arg = " ".join([f"{key}={d[key]}" for key in d.keys()])
 
-    bsub_script = f"""
+    bsub_script = textwrap.dedent(f"""\
     #!/bin/bash
     #BSUB -q gpuv100
-    #BSUB -J cyp_finetune
+    #BSUB -J cyp_finetune_{i}
     #BSUB -n 4
     #BSUB -R "span[hosts=1]"
-    #BSUB -R "rusage[mem=1GB]"
+    #BSUB -R "rusage[mem=4GB]"
     #BSUB -gpu "num=1:mode=exclusive_process"
     #BSUB -W 11:00
     #BSUB -o outputs/cyp_%J.out
@@ -88,16 +90,17 @@ for d in result:
 
     # Results go to runs/<task>/<model>/<timestamp>/ (set in conf/config.yaml).
     uv run --no-sync python -u finetune.py {overrides_arg} device=cuda frac_data=0.1
-    """
+    """)
 
     print(bsub_script)
-    run(
+    r = run(
         ["bsub"], 
         input=bsub_script,
         text=True,
         capture_output=True,
         check=True
     )
+    print(r.stdout.strip())
     print("Submitted job")
 
 
