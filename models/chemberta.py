@@ -10,7 +10,6 @@ class ChemBERTaDataset(Dataset):
     def __init__(self, df, tokenizer, targets, include_labels=True):
         self.encodings = tokenizer(df["SMILES"].tolist(), truncation=True, padding=True)
         self.y = df.reindex(columns=targets).to_numpy(dtype=np.float32)
-        print(self.y)
         self.include_labels = include_labels
 
     def __getitem__(self, idx):
@@ -70,5 +69,7 @@ class ChemBERTa(nn.Module):
     def forward(self, batch):
         with torch.no_grad():
             output = self.encoder(**batch)
-        features = output.hidden_states[1].mean(dim=1)
+        last_hidden_state = output.hidden_states[-1]
+        mask = batch["attention_mask"].unsqueeze(-1)
+        features = (last_hidden_state*mask).sum(dim=1) / mask.sum(dim=1).clamp_min(1)
         return self.readout(features)
