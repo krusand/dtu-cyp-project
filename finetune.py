@@ -162,9 +162,9 @@ def train_torch(cfg, train, val, targets, task, data, out):
             reserved_gb = torch.cuda.max_memory_reserved() / (1024 ** 3)
             print(f"Peak tensor memory: {peak_gb:.2f} GB | Peak reserved by PyTorch: {reserved_gb:.2f} GB")
 
-        if patience_idx < cfg.train.early_stopping_rounds:
+        if patience_idx >= cfg.train.early_stopping_rounds:
             print("Early stopping")
-            return
+            break
 
 
     saved = torch.load(out / 'best.pt', map_location=model.device, weights_only=True)

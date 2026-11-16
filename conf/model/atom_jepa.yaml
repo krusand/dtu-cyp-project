@@ -11,11 +11,11 @@ model:
   freeze_encoder: false   # true trains only the readout head
   encoder_lr: 1.0e-5
   readout_lr: 1.0e-3
-  num_conformers: 50
+  num_conformers: 1
 
 train:
-  epochs: 50
-  batch_size: 32
+  epochs: 30
+  batch_size: 16
   weight_decay: 1.0e-4
   grad_clip: 1.0
   early_stopping_rounds: 5
