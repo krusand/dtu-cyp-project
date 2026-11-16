@@ -1,0 +1,90 @@
+{
+  "regression": [
+    {
+      "val_score": 0.6839447383666818,
+      "test_score": 0.7386306791253148,
+      "run_dir": "multirun/2026-11-14/13-21-21/2",
+      "checkpoint": "multirun/2026-11-14/13-21-21/2/best.pt",
+      "params": {
+        "encoder_lr": 5e-06,
+        "readout_lr": 0.001,
+        "batch_size": 16,
+        "dropout": 0.1,
+        "weight_decay": 0.0001,
+        "epochs": 20
+      }
+    },
+    {
+      "val_score": 0.6856631064663656,
+      "test_score": 0.7457200318804347,
+      "run_dir": "multirun/2026-11-13/19-03-46/2",
+      "checkpoint": "multirun/2026-11-13/19-03-46/2/best.pt",
+      "params": {
+        "encoder_lr": 5e-06,
+        "readout_lr": 0.001,
+        "batch_size": 16,
+        "dropout": 0.1,
+        "weight_decay": 0.0001,
+        "epochs": 20
+      }
+    },
+    {
+      "val_score": 0.689253516837379,
+      "test_score": 0.7246362674754178,
+      "run_dir": "multirun/2026-11-14/13-21-21/0",
+      "checkpoint": "multirun/2026-11-14/13-21-21/0/best.pt",
+      "params": {
+        "encoder_lr": 5e-06,
+        "readout_lr": 0.001,
+        "batch_size": 8,
+        "dropout": 0.1,
+        "weight_decay": 0.0001,
+        "epochs": 20
+      }
+    }
+  ],
+  "classification": [
+    {
+      "val_score": 0.31172232767880337,
+      "test_score": 0.2357064955170918,
+      "run_dir": "multirun/2026-11-13/19-05-10/1",
+      "checkpoint": "multirun/2026-11-13/19-05-10/1/best.pt",
+      "params": {
+        "encoder_lr": 1e-05,
+        "readout_lr": 0.001,
+        "batch_size": 16,
+        "dropout": 0.3,
+        "weight_decay": 0.0001,
+        "epochs": 20
+      }
+    },
+    {
+      "val_score": 0.2998832351013499,
+      "test_score": 0.2298838783306413,
+      "run_dir": "multirun/2026-11-13/19-05-10/5",
+      "checkpoint": "multirun/2026-11-13/19-05-10/5/best.pt",
+      "params": {
+        "encoder_lr": 5e-06,
+        "readout_lr": 0.001,
+        "batch_size": 16,
+        "dropout": 0.3,
+        "weight_decay": 0.0001,
+        "epochs": 20
+      }
+    },
+    {
+      "val_score": 0.29675252821467574,
+      "test_score": 0.14222221530452128,
+      "run_dir": "multirun/2026-11-13/19-05-10/3",
+      "checkpoint": "multirun/2026-11-13/19-05-10/3/best.pt",
+      "params": {
+        "encoder_lr": 1e-05,
+        "readout_lr": 0.0005,
+        "batch_size": 16,
+        "dropout": 0.3,
+        "weight_decay": 0.0001,
+        "epochs": 20
+      }
+    }
+  ]
+}

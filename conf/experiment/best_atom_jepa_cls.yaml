@@ -1,0 +1,18 @@
+# @package _global_
+defaults:
+  - override /model: atom_jepa
+  - override /readout: mlp
+
+task: classification
+
+model:
+  precision: fp32
+  encoder_lr: 1.0e-5
+  readout_lr: 1.0e-3
+
+train:
+  epochs: 20
+  batch_size: 16
+
+readout:
+  dropout: 0.3

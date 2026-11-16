@@ -16,10 +16,13 @@ import pandas as pd
 import torch
 from torch import nn
 from sklearn.metrics import matthews_corrcoef, mean_absolute_error, r2_score, roc_auc_score, average_precision_score
+from tqdm import tqdm
+import os
+
 from models import MODELS
 from models.gbm import LightGBMModel
 from prepare_data import REG, CLS
-from tqdm import tqdm
+
 
 def masked_loss(pred, y, task, mean, std, model_name):
     mask = torch.isfinite(y)
@@ -33,6 +36,7 @@ def masked_loss(pred, y, task, mean, std, model_name):
 
 def metrics(frame, predictions, targets, task):
     result = {}
+    
     for j, target in enumerate(targets):
         y = frame[target].to_numpy(dtype=float)
         mask = np.isfinite(y)
@@ -64,9 +68,30 @@ def metrics(frame, predictions, targets, task):
         if all(s is not None and np.isfinite(s) for s in scores) else None)
     return result
 
+@torch.no_grad()
+def predict_atom_jepa(model, loader, task, mean, std, cfg):
+    model.eval()
+    out = []
+    num_conformers = cfg.model.num_conformers
+    for batch_per_conformer in loader:
+        conf_preds = []
+        for sub_batch in batch_per_conformer:
+            p = model(sub_batch)
+            p = p * std + mean if task == 'regression' else p.sigmoid()
+            conf_preds.append(p)
+        p_stack = torch.stack(conf_preds, dim=0)
+        p_avg = p_stack.mean(dim=0)
+        out.append(p_avg.float().cpu().numpy())
+    values = np.concatenate(out)
+    if not np.isfinite(values).all():
+        raise RuntimeError('Nonfinite predictions')
+    return values
 
 @torch.no_grad()
-def predict(model, loader, task, mean, std):
+def predict(model, loader, task, mean, std, cfg):
+    if cfg.model.name == 'atom_jepa':
+        return predict_atom_jepa(model, loader, task, mean, std, cfg)
+
     model.eval()
     out = []
     for batch in loader:
@@ -97,10 +122,10 @@ def train_torch(cfg, train, val, targets, task, data, out):
     val_loader = model.loader(val, targets, batch_size)
     optimizer = torch.optim.AdamW(model.param_groups(), weight_decay=cfg.train.weight_decay)
     best = float('inf')
-    for epoch in tqdm(range(1, cfg.train.epochs + 1)):
+    for epoch in range(1, cfg.train.epochs + 1):
         model.train()
         loss_sum, observed = 0., 0
-        for batch in train_loader:
+        for batch in tqdm(train_loader):
             y = batch['y'].to(model.device)
             loss = masked_loss(model(batch).float(), y, task, mean, std, cfg.model.name)
             if loss is None:
@@ -115,7 +140,7 @@ def train_torch(cfg, train, val, targets, task, data, out):
             n = int(torch.isfinite(y).sum())
             loss_sum += loss.item() * n
             observed += n
-        score = metrics(val, predict(model, val_loader, task, mean, std), targets, task)
+        score = metrics(val, predict(model, val_loader, task, mean, std, cfg), targets, task)
         primary = score['macro_ST-RAE' if task == 'regression' else 'macro_MCC']
         if primary is None:
             raise ValueError('Validation metric undefined; check endpoint coverage and split')
@@ -137,11 +162,26 @@ def train_torch(cfg, train, val, targets, task, data, out):
     model.load_state_dict(saved['model'])
     mean, std = saved['mean'], saved['std']
     print(f'Best epoch: {saved["epoch"]}', flush=True)
-    return lambda frame: predict(model, model.loader(frame, targets, batch_size), task, mean, std)
+    return lambda frame: predict(model, model.loader(frame, targets, batch_size), task, mean, std, cfg)
 
 
 def cfg_dict(cfg):
     return OmegaConf.to_container(cfg, resolve=True)
+
+def is_num_conformers_larger_than_num_conformers_in_data(cfg) -> bool:
+    if cfg.model.name != 'atom_jepa':
+        return False
+    key = os.listdir(Path(cfg.data) / "conformers")[0]
+    with np.load(Path(cfg.data) / "conformers" / key) as d:
+        num_conformers_in_file = d['z'].shape[1]
+        print(f"Number of conformers in file: {num_conformers_in_file}")
+    return True if cfg.model.num_conformers > num_conformers_in_file else False
+
+def load_data(cfg, split):
+    data = pd.read_csv(Path(cfg.data) / cfg.task / f'{split}.csv')
+    n = len(data)
+    return data.iloc[:int(n*cfg.frac_data)]
+
 
 
 @hydra.main(config_path='conf', config_name='config', version_base='1.3')
@@ -151,6 +191,9 @@ def main(cfg):
         torch.cuda.reset_peak_memory_stats()
     if cfg.task not in ('regression', 'classification'):
         raise ValueError(f'Unknown task {cfg.task!r}')
+    if is_num_conformers_larger_than_num_conformers_in_data(cfg):
+        raise ValueError(f'num_conformers larger than number of conformers in data, rerun prepare_data.py with more conformers')
+    
     out = Path(HydraConfig.get().runtime.output_dir)
     data = Path(cfg.data)
     random.seed(cfg.seed)
@@ -159,8 +202,8 @@ def main(cfg):
     torch.cuda.manual_seed_all(cfg.seed)
     task = cfg.task
     targets = REG if task == 'regression' else CLS
-    train_all = pd.read_csv(data / task / 'train.csv')
-    val_all = pd.read_csv(data / task / 'val.csv')
+    train_all = load_data(cfg, 'train')
+    val_all = load_data(cfg, 'val')
     frame = pd.concat([train_all, val_all], ignore_index=True)
     train = train_all[train_all[targets].notna().any(axis=1)].copy()
     val = val_all[val_all[targets].notna().any(axis=1)].copy()
@@ -196,26 +239,26 @@ def main(cfg):
         predict_frame = model.predict
     else:
         predict_frame = train_torch(cfg, train, val, targets, task, data, out)
+
     validation_predictions = predict_frame(val)
     (out / 'validation_metrics.json').write_text(json.dumps(metrics(val, validation_predictions, targets, task), indent=2))
     vp = val[['SMILES', 'Molecule_Name']].copy()
     vp[targets] = validation_predictions
     vp.to_csv(out / 'validation_predictions.csv', index=False)
     # Only now load and evaluate the held-out labelled test split.
-    if cfg.get('eval_test', False):
-        test = pd.read_csv(data / task / 'test.csv')
-        if not len(test):
-            raise ValueError('Empty test set')
-        if set(frame.canonical_smiles) & set(test.canonical_smiles):
-            raise ValueError('Exact molecule leakage into the test split')
-        predictions = predict_frame(test)
-        test_scores = metrics(test, predictions, targets, task)
-        (out / 'test_metrics.json').write_text(json.dumps(test_scores, indent=2))
-        # Classification exports probabilities; metrics use a fixed 0.5 threshold.
-        output = test[['SMILES', 'Molecule_Name']].copy()
-        output[targets] = predictions
-        output.to_csv(out / 'test_predictions.csv', index=False)
-        print(f'Held-out test metrics: {test_scores}')
+    test = load_data(cfg, 'test')
+    if not len(test):
+        raise ValueError('Empty test set')
+    if set(frame.canonical_smiles) & set(test.canonical_smiles):
+        raise ValueError('Exact molecule leakage into the test split')
+    predictions = predict_frame(test)
+    test_scores = metrics(test, predictions, targets, task)
+    (out / 'test_metrics.json').write_text(json.dumps(test_scores, indent=2))
+    # Classification exports probabilities; metrics use a fixed 0.5 threshold.
+    output = test[['SMILES', 'Molecule_Name']].copy()
+    output[targets] = predictions
+    output.to_csv(out / 'test_predictions.csv', index=False)
+    print(f'Held-out test metrics: {test_scores}')
 
     if cfg.device == 'cuda':
         peak_gb = torch.cuda.max_memory_allocated() / (1024 ** 3)

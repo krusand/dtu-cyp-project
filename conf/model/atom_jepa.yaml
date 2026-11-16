@@ -1,7 +1,7 @@
 # @package _global_
 # Pretrained Atom-JEPA encoder + readout head, fine-tuned end to end.
 defaults:
-  - override /readout: mlpbn
+  - override /readout: mlp
 
 model:
   name: atom_jepa
@@ -11,9 +11,10 @@ model:
   freeze_encoder: false   # true trains only the readout head
   encoder_lr: 1.0e-5
   readout_lr: 1.0e-3
+  num_conformers: 50
 
 train:
   epochs: 2
-  batch_size: 8
+  batch_size: 32
   weight_decay: 1.0e-4
   grad_clip: 1.0
