@@ -1,6 +1,6 @@
 #!/bin/bash
 #BSUB -q gpuv100
-#BSUB -J cyp_finetune
+#BSUB -J cyp_tune
 #BSUB -u s253471@dtu.dk
 #BSUB -B
 #BSUB -N
@@ -8,18 +8,19 @@
 #BSUB -R "span[hosts=1]"
 #BSUB -R "rusage[mem=16GB]"
 #BSUB -gpu "num=1:mode=exclusive_process"
-#BSUB -W 12:00
+#BSUB -W 08:00
 #BSUB -o outputs/cyp_%J.out
 #BSUB -e outputs/cyp_%J.err
 set -euo pipefail
 pwd
 
-# Fallback to $PWD if LSF -env strips $BLACKHOLE from the job environment
 CACHE_ROOT="${BLACKHOLE:-$PWD}"
 export UV_CACHE_DIR="$CACHE_ROOT/.cache/uv"
 export HF_HOME="$CACHE_ROOT/.hf_cache"
 export OMP_NUM_THREADS=4
 export MKL_NUM_THREADS=4
+
+uv sync --extra cu124
 
 MODEL="${MODEL:-atom_jepa}"
 TASK="${TASK:-regression}"
@@ -34,19 +35,20 @@ for f in train val test; do
     [[ -f "data/$TASK/$f.csv" ]] || { echo "Missing data/$TASK/$f.csv; run prepare_data.sh first" >&2; exit 2; }
 done
 
-# Select task-specific hyperparameter sweep
 if [[ "$TASK" == "classification" ]]; then
     SWEEP_ARGS="model.encoder_lr=1e-5,5e-6 model.readout_lr=1e-3,5e-4 train.batch_size=16 readout.dropout=0.1,0.3"
 else
-    SWEEP_ARGS="model.encoder_lr=1e-5,5e-6 model.readout_lr=1e-3,5e-4 train.batch_size=16"
+    SWEEP_ARGS="model.encoder_lr=1e-5,5e-6 model.readout_lr=1e-3,5e-4 train.batch_size=16 readout.dropout=0.1,0.2"
 fi
 
 uv run --no-sync python -u finetune.py -m \
     model="$MODEL" \
+    readout=mlp \
     task="$TASK" \
     seed=42 \
     device=cuda \
     model.precision=fp32 \
+    model.freeze_encoder=false \
     train.epochs=20 \
     $SWEEP_ARGS \
     $OVERRIDES
