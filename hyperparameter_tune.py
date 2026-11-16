@@ -1,7 +1,16 @@
 from itertools import product
 from subprocess import call, run
 
-config_atom = {
+config_atom_tier1 = {
+    "model": ["atom_jepa"],
+    "+readout_lr": [1e-3, 1e-4, 1e-5, 1e-6],
+    "+batch_size": [16],
+    "+dropout": [0.1, 0.3, 0.5],
+    "+encoder_lr": [1e-3, 1e-4, 1e-5, 1e-6],
+    "task": ["classfication", "regression"],
+}
+
+config_atom_tier2 = {
     "model": ["atom_jepa"],
     "+readout_lr": [1e-3, 1e-4],
     "+batch_size": [16],
@@ -10,7 +19,7 @@ config_atom = {
     "+freeze_encoder": [True, False],
     "+weight_decay": [1.0e-3, 1.0e-4, 1.0e-5],
     "+num_conformers": [1, 2, 5],
-    "task": ["regression", "classfication"],
+    "task": ["classfication"],
     "readout": ["linear", "mlp", "mlpbn"]
 }
 
@@ -26,12 +35,15 @@ config_chemberta = {
     "readout": ["linear", "mlp", "mlpbn"]
 }
 
-config = config_atom
+config = config_atom_tier1
 
 keys, values = zip(*config.items())
 result = [dict(zip(keys, p)) for p in product(*values)]
 
-for d in result[:5]:
+print(f"Len of the result {len(result)}")
+exit()
+
+for d in result:
     
     overrides_arg = " ".join([f"{key}={d[key]}" for key in d.keys()])
 
@@ -66,7 +78,7 @@ for d in result[:5]:
     # Data must be prepared first with: bsub < prepare_data.sh
 
     # Results go to runs/<task>/<model>/<timestamp>/ (set in conf/config.yaml).
-    uv run --no-sync python -u finetune.py {overrides_arg}
+    uv run --no-sync python -u finetune.py {overrides_arg} device=cuda frac_data=0.1
     """
 
     print(bsub_script)
