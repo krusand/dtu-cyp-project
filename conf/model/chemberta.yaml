@@ -7,7 +7,7 @@ model:
   type: chemberta
   encoder_lr: 1.0e-5
   readout_lr: 1.0e-1
-  freeze_encoder: False 
+  freeze_encoder: False
 
 train:
   epochs: 20
