@@ -14,7 +14,7 @@ model:
   num_conformers: 50
 
 train:
-  epochs: 50
+  epochs: 2
   batch_size: 32
   weight_decay: 1.0e-4
   grad_clip: 1.0
