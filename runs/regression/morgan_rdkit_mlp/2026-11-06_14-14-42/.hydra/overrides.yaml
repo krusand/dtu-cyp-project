@@ -1,0 +1,3 @@
+- model=morgan_rdkit_mlp
+- task=regression
+- train.batch_size=32

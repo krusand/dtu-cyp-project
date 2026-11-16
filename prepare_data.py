@@ -14,6 +14,7 @@ import pandas as pd
 from atom_jepa.conformers import smiles_to_samples
 from rdkit import Chem, rdBase
 from sklearn.model_selection import GroupShuffleSplit
+from loguru import logger
 
 DATA_REVISION = '146282d2ce1532f1803679a834a9bec9dac1e482'
 ATOM_JEPA_VERSION = importlib.metadata.version('atom-jepa')
@@ -30,9 +31,14 @@ def conformer(job):
         return key, ''
     try:
         # Use the original SMILES and the upstream defaults, without retries or centering.
-        sample = smiles_to_samples(smiles, num_conformers=1, seed=seed, mmff_max_iters=500)[0]
-        np.savez_compressed(path, z=sample['atomic_numbers'].numpy(),
-                            pos=sample['node_coordinates'].numpy())
+        samples = smiles_to_samples(smiles, num_conformers=1, seed=seed, mmff_max_iters=500)
+
+        zs = np.column_stack([sample["atomic_numbers"].numpy() for sample in samples])
+        poss = np.column_stack([sample["node_coordinates"].numpy() for sample in samples])
+        
+        np.savez_compressed(path, 
+                            z=zs,
+                            pos=poss)
         return key, ''
     except Exception as exc:
         return key, str(exc)

@@ -1,0 +1,5 @@
+- model=morgan_rdkit_mlp
+- task=regression
+- readout.num_layers=4
+- readout.dropout=0.3
+- readout.hidden_dim=256
