@@ -23,7 +23,16 @@ config_atom_tier2 = {
     "readout": ["linear", "mlp", "mlpbn"]
 }
 
-config_chemberta = {
+config_chemberta_tier_1 = {
+    "model": ["chemberta"],
+    "+readout_lr": [1e-3, 1e-4, 1e-5, 1e-6],
+    "+batch_size": [8, 16, 32],
+    "+dropout": [0.1, 0.3, 0.5],
+    "+encoder_lr": [1e-3, 1e-4, 1e-5, 1e-6],
+    "task": ["regression", "classfication"],
+}
+
+config_chemberta_tier_2 = {
     "model": ["chemberta"],
     "+readout_lr": [1e-3, 1e-4, 1e-5, 1e-6],
     "+batch_size": [8, 16, 32],

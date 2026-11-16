@@ -10,7 +10,7 @@ model:
   freeze_encoder: False
 
 train:
-  epochs: 20
+  epochs: 50
   batch_size: 16
   weight_decay: 1.0e-4
   grad_clip: 1.0
