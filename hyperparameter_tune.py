@@ -16,13 +16,13 @@ config_atom = {
 
 config_chemberta = {
     "model": ["chemberta"],
-    "readout_lr": [1e-3, 1e-4],
-    "batch_size": [16],
-    "dropout": [0.1, 0.3, 0.5],
-    "encoder_lr": [1e-5, 5e-06],
-    "freeze_encoder": [True, False],
-    "weight_decay": [1.0e-3, 1.0e-4, 1.0e-5],
-    "num_conformers": [1, 2, 5],
+    "+readout_lr": [1e-3, 1e-4],
+    "+batch_size": [16],
+    "+dropout": [0.1, 0.3, 0.5],
+    "+encoder_lr": [1e-5, 5e-06],
+    "+freeze_encoder": [True, False],
+    "+weight_decay": [1.0e-3, 1.0e-4, 1.0e-5],
+    "+num_conformers": [1, 2, 5],
     "task": ["regression", "classfication"],
     "readout": ["linear", "mlp", "mlpbn"]
 }
@@ -34,7 +34,7 @@ result = [dict(zip(keys, p)) for p in product(*values)]
 
 for d in result[:5]:
     
-    overrides_arg = " ".join([f"+{key}={d[key]}" for key in d.keys()])
+    overrides_arg = " ".join([f"{key}={d[key]}" for key in d.keys()])
 
     bsub_script = f"""
     #!/bin/bash
@@ -71,6 +71,7 @@ for d in result[:5]:
     """
 
     print(bsub_script)
+    exit()
     run(
         ["bsub"], 
         input=bsub_script,
