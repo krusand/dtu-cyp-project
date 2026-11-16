@@ -18,3 +18,4 @@ train:
   batch_size: 32
   weight_decay: 1.0e-4
   grad_clip: 1.0
+  early_stopping_rounds: 5

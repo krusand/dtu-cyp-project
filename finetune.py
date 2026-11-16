@@ -122,6 +122,7 @@ def train_torch(cfg, train, val, targets, task, data, out):
     val_loader = model.loader(val, targets, batch_size)
     optimizer = torch.optim.AdamW(model.param_groups(), weight_decay=cfg.train.weight_decay)
     best = float('inf')
+    patience_idx = 0
     for epoch in range(1, cfg.train.epochs + 1):
         model.train()
         loss_sum, observed = 0., 0
@@ -150,13 +151,21 @@ def train_torch(cfg, train, val, targets, task, data, out):
             f.write(json.dumps(record) + '\n')
         print(json.dumps(record), flush=True)
         if selection < best:
+            patience_idx = 0
             best = selection
             torch.save({'model': model.state_dict(), 'mean': mean, 'std': std,
                         'epoch': epoch, 'config': cfg_dict(cfg)}, out / 'best.pt')
+        else:
+            patience_idx += 1
         if cfg.device == 'cuda':
             peak_gb = torch.cuda.max_memory_allocated() / (1024 ** 3)
             reserved_gb = torch.cuda.max_memory_reserved() / (1024 ** 3)
             print(f"Peak tensor memory: {peak_gb:.2f} GB | Peak reserved by PyTorch: {reserved_gb:.2f} GB")
+
+        if patience_idx < cfg.train.early_stopping_rounds:
+            print("Early stopping")
+            return
+
 
     saved = torch.load(out / 'best.pt', map_location=model.device, weights_only=True)
     model.load_state_dict(saved['model'])
