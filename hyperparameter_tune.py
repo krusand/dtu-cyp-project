@@ -26,33 +26,34 @@ config_atom_tier2 = {
 
 config_chemberta_tier_1 = {
     "model": ["chemberta"],
-    "+readout_lr": [1e-3, 1e-4, 1e-5, 1e-6],
-    "+batch_size": [8, 16, 32],
-    "+dropout": [0.1, 0.3, 0.5],
-    "+encoder_lr": [1e-3, 1e-4, 1e-5, 1e-6],
+    "model.readout_lr": [1e-3, 1e-4, 1e-5, 1e-6],
+    "train.batch_size": [16],
+    "readout.dropout": [0.1, 0.3, 0.5],
+    "model.encoder_lr": [1e-3, 1e-4, 1e-5, 1e-6],
     "task": ["regression", "classification"],
 }
 
+# Testing tier 2 with the found best hyperparameters from tier 1. This is a smaller search space than tier 1 for regression
 config_chemberta_tier_2 = {
     "model": ["chemberta"],
-    "+readout_lr": [1e-3, 1e-4, 1e-5, 1e-6],
-    "+batch_size": [8, 16, 32],
-    "+dropout": [0.1, 0.3, 0.5],
-    "+encoder_lr": [1e-3, 1e-4, 1e-5, 1e-6],
-    "+freeze_encoder": [True, False],
-    "+weight_decay": [1.0e-1, 1.0e-2, 1.0e-3, 1.0e-4, 1.0e-5, 1.0e-6],
-    "task": ["regression", "classification"],
-    "readout": ["linear", "mlp", "mlpbn"]
+    "model.readout_lr": [1e-4],
+    "readout.dropout": [0.3],
+    "model.encoder_lr": [1e-4],
+    "train.batch_size": [8, 16, 32],
+    "model.freeze_encoder": [True, False],
+    "train.weight_decay": [1.0e-1, 1.0e-2, 1.0e-3, 1.0e-4, 1.0e-5, 1.0e-6],
+    "readout": ["linear", "mlp", "mlpbn"],
+    "task": ["regression"],
 }
 
-config = config_atom_tier1
+config = config_chemberta_tier_2
 
 keys, values = zip(*config.items())
 result = [dict(zip(keys, p)) for p in product(*values)]
 
 print(f"Len of the result {len(result)}")
 
-for i, d in enumerate(result[:4]):
+for i, d in enumerate(result):
 
     overrides_arg = " ".join([f"{key}={d[key]}" for key in d.keys()])
 
@@ -72,6 +73,8 @@ for i, d in enumerate(result[:4]):
 
     # Setup UV environment
     export UV_CACHE_DIR=".uv_cache"
+    export PATH="$HOME/.local/bin:$PATH"
+    command -v uv
     uv sync --extra cu124
 
 
@@ -87,7 +90,8 @@ for i, d in enumerate(result[:4]):
     # Data must be prepared first with: bsub < prepare_data.sh
 
     # Results go to runs/<task>/<model>/<timestamp>/ (set in conf/config.yaml).
-    uv run --no-sync python -u finetune.py {overrides_arg} device=cuda frac_data=0.1
+    #uv run --no-sync python -u finetune.py {overrides_arg} device=cuda frac_data=1
+    uv run --no-sync python -u finetune.py {overrides_arg} device=cuda frac_data=1 hydra.run.dir=runs/chemberta_hparam/tier2_bs16/{d['task']}/job_{i}
     """)
 
     print(bsub_script)
@@ -100,6 +104,4 @@ for i, d in enumerate(result[:4]):
     )
     print(r.stdout.strip())
     print("Submitted job")
-
-
 
