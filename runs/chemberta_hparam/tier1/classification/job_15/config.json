@@ -1,0 +1,76 @@
+{
+  "task": "classification",
+  "data": "data",
+  "seed": 42,
+  "device": "cuda",
+  "frac_data": 1,
+  "readout": {
+    "type": "mlp",
+    "hidden_dim": 512,
+    "num_layers": 3,
+    "dropout": 0.3
+  },
+  "model": {
+    "name": "chemberta",
+    "type": "chemberta",
+    "encoder_lr": 1e-06,
+    "readout_lr": 0.001,
+    "freeze_encoder": false
+  },
+  "train": {
+    "epochs": 50,
+    "batch_size": 8,
+    "weight_decay": 0.0001,
+    "grad_clip": 1.0,
+    "early_stopping_rounds": 5
+  },
+  "targets": [
+    "CYP2D6_is_TDI",
+    "CYP3A4_is_TDI"
+  ],
+  "output_dir": "/zhome/b5/2/224170/dtu-cyp-project/runs/chemberta_hparam/tier1/classification/job_15",
+  "versions": {
+    "torch": "2.6.0+cu124",
+    "atom-jepa": "0.3.0",
+    "rdkit": "2026.9.1",
+    "numpy": "2.5.4",
+    "pandas": "2.3.3",
+    "scikit-learn": "1.9.1",
+    "hydra-core": "1.3.2",
+    "descriptastorus": "2.8.0",
+    "lightgbm": "4.6.0"
+  },
+  "preparation": {
+    "config": {
+      "data_revision": "146282d2ce1532f1803679a834a9bec9dac1e482",
+      "seed": 42,
+      "val_fraction": 0.15,
+      "test_fraction": 0.15,
+      "limit": null,
+      "rdkit": "2026.09.1",
+      "protocol": "atom-jepa-0.3.0"
+    },
+    "sha256": {
+      "cyp-challenge-TRAIN_inhibition.csv": "b8f79addd266fb6f9f4c222c5e4e73d926362328b6a8d2841871a54e46bd2278",
+      "cyp-challenge-TRAIN_TDI.csv": "b458f599a792412292664386e8f18adc5d4a4129d6bd212ae80a60fb9b96bb60"
+    },
+    "counts": {
+      "regression": {
+        "train": 3415,
+        "test": 762,
+        "val": 728
+      },
+      "classification": {
+        "train": 3382,
+        "test": 723,
+        "val": 715
+      }
+    },
+    "failed_conformers": 2
+  },
+  "split_sha256": {
+    "train": "0d711ddffde1de0ffbc76aee777eb01fce8b4de497d9d4fc5a63333af85a5761",
+    "val": "f12179dff5e37d74a2aea69f9f6d7cc1654f2032016700fe1f82c4299e339f87",
+    "test": "ca7bab7de8a3b53f6c6b1d47ae78c98bc4dcd96df90119da941fcd65adeab480"
+  }
+}

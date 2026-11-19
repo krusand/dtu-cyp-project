@@ -66,10 +66,26 @@ class ChemBERTa(nn.Module):
             groups.append({'params': list(self.encoder.parameters()), 'lr': self.cfg.encoder_lr})
         return groups
 
+#    def forward(self, batch):
+#        with torch.no_grad():
+#            output = self.encoder(**batch)
+#        last_hidden_state = output.hidden_states[-1]
+#        mask = batch["attention_mask"].unsqueeze(-1)
+#        features = (last_hidden_state*mask).sum(dim=1) / mask.sum(dim=1).clamp_min(1)
+#        return self.readout(features)
+
     def forward(self, batch):
-        with torch.no_grad():
-            output = self.encoder(**batch)
+        inputs = {key: value.to(self.device) 
+        for key, value in batch.items()
+            if key != "y"}
+            
+        if self.cfg.freeze_encoder:
+            with torch.no_grad():
+                output = self.encoder(**inputs)
+        else:
+            output = self.encoder(**inputs)
+
         last_hidden_state = output.hidden_states[-1]
-        mask = batch["attention_mask"].unsqueeze(-1)
-        features = (last_hidden_state*mask).sum(dim=1) / mask.sum(dim=1).clamp_min(1)
+        mask = inputs["attention_mask"].unsqueeze(-1)
+        features = (last_hidden_state * mask).sum(dim=1) / mask.sum(dim=1).clamp_min(1)
         return self.readout(features)
