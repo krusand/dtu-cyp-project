@@ -2,13 +2,12 @@ from itertools import product
 from subprocess import run
 import textwrap
 
-
 config_atom_tier1 = {
     "model": ["atom_jepa"],
-    "+readout_lr": [1e-3, 1e-4, 1e-5, 1e-6],
-    "+batch_size": [16],
-    "+dropout": [0.1, 0.3, 0.5],
-    "+encoder_lr": [1e-3, 1e-4, 1e-5, 1e-6],
+    "model.readout_lr": [1e-3, 1e-4, 1e-5, 1e-6],
+    "train.batch_size": [16],
+    "readout.dropout": [0.1, 0.3, 0.5],
+    "model.encoder_lr": [1e-4, 1e-5, 1e-6],
     "task": ["classification", "regression"],
 }
 
@@ -21,7 +20,7 @@ config_atom_tier2 = {
     "+freeze_encoder": [True, False],
     "+weight_decay": [1.0e-3, 1.0e-4, 1.0e-5],
     "+num_conformers": [1, 2, 5],
-    "task": ["classfication"],
+    "task": ["classification"],
     "readout": ["linear", "mlp", "mlpbn"]
 }
 
@@ -31,7 +30,7 @@ config_chemberta_tier_1 = {
     "+batch_size": [8, 16, 32],
     "+dropout": [0.1, 0.3, 0.5],
     "+encoder_lr": [1e-3, 1e-4, 1e-5, 1e-6],
-    "task": ["regression", "classfication"],
+    "task": ["regression", "classification"],
 }
 
 config_chemberta_tier_2 = {
@@ -42,7 +41,7 @@ config_chemberta_tier_2 = {
     "+encoder_lr": [1e-3, 1e-4, 1e-5, 1e-6],
     "+freeze_encoder": [True, False],
     "+weight_decay": [1.0e-1, 1.0e-2, 1.0e-3, 1.0e-4, 1.0e-5, 1.0e-6],
-    "task": ["regression", "classfication"],
+    "task": ["regression", "classification"],
     "readout": ["linear", "mlp", "mlpbn"]
 }
 
@@ -53,9 +52,10 @@ result = [dict(zip(keys, p)) for p in product(*values)]
 
 print(f"Len of the result {len(result)}")
 
-for i, d in enumerate(result[:2]):
+missing_indices = [27, 28]
 
-
+for i in missing_indices:
+    d = result[i]
     overrides_arg = " ".join([f"{key}={d[key]}" for key in d.keys()])
 
     bsub_script = textwrap.dedent(f"""\
@@ -66,30 +66,31 @@ for i, d in enumerate(result[:2]):
     #BSUB -R "span[hosts=1]"
     #BSUB -R "rusage[mem=4GB]"
     #BSUB -gpu "num=1:mode=exclusive_process"
-    #BSUB -W 11:00
-    #BSUB -o outputs/cyp_%J.out
-    #BSUB -e outputs/cyp_%J.err
+    #BSUB -W 3:00
+    #BSUB -o outputs/cyp_{i}_%J.out
+    #BSUB -e outputs/cyp_{i}_%J.err
     set -euo pipefail
     pwd
 
     # Setup UV environment
     export UV_CACHE_DIR=".uv_cache"
-    uv sync --extra cu124
-
+    export PATH="$HOME/.local/bin:$PATH"
+    command -v uv
 
     # Submit from the starter directory. Set up this venv BEFORE submitting.
+    flock .venv.lock uv sync --extra cu124 --frozen
 
+    # Keep Hugging Face cache consistent with the pre-download command in README.
     export OMP_NUM_THREADS=4
     export MKL_NUM_THREADS=4
-    # Keep Hugging Face cache consistent with the pre-download command in README.
     export HF_HOME=".hf_cache"
 
     uv run --no-sync python -c 'import torch; assert torch.cuda.is_available(), "CUDA-enabled PyTorch/GPU required"; print(torch.__version__, torch.version.cuda)'
 
-    # Data must be prepared first with: bsub < prepare_data.sh
+
 
     # Results go to runs/<task>/<model>/<timestamp>/ (set in conf/config.yaml).
-    uv run --no-sync python -u finetune.py {overrides_arg} device=cuda frac_data=0.1
+    uv run --no-sync python -u finetune.py {overrides_arg} device=cuda frac_data=0.5
     """)
 
     print(bsub_script)

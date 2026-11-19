@@ -162,9 +162,9 @@ def train_torch(cfg, train, val, targets, task, data, out):
             reserved_gb = torch.cuda.max_memory_reserved() / (1024 ** 3)
             print(f"Peak tensor memory: {peak_gb:.2f} GB | Peak reserved by PyTorch: {reserved_gb:.2f} GB")
 
-        if patience_idx < cfg.train.early_stopping_rounds:
+        if patience_idx >= cfg.train.early_stopping_rounds:
             print("Early stopping")
-            return
+            break
 
 
     saved = torch.load(out / 'best.pt', map_location=model.device, weights_only=True)
@@ -188,10 +188,9 @@ def is_num_conformers_larger_than_num_conformers_in_data(cfg) -> bool:
 
 def load_data(cfg, split):
     data = pd.read_csv(Path(cfg.data) / cfg.task / f'{split}.csv')
-    n = len(data)
-    return data.iloc[:int(n*cfg.frac_data)]
-
-
+    if cfg.frac_data < 1.0:
+        data = data.sample(frac=cfg.frac_data, random_state=42).reset_index(drop=True)
+    return data
 
 @hydra.main(config_path='conf', config_name='config', version_base='1.3')
 def main(cfg):
