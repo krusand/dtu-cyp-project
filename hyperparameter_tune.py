@@ -34,17 +34,17 @@ config_chemberta_tier_1 = {
     "task": ["regression", "classification"],
 }
 
-# Testing tier 2 with the found best hyperparameters from tier 1. This is a smaller search space than tier 1 for regression
+# Testing tier 2 with the found best hyperparameters from tier 1.
 config_chemberta_tier_2 = {
     "model": ["chemberta"],
-    "model.readout_lr": [1e-4],
-    "readout.dropout": [0.3],
+    "model.readout_lr": [1e-3],
+    "readout.dropout": [0.1],
     "model.encoder_lr": [1e-4],
     "train.batch_size": [8, 16, 32],
     "model.freeze_encoder": [True, False],
     "train.weight_decay": [1.0e-1, 1.0e-2, 1.0e-3, 1.0e-4, 1.0e-5, 1.0e-6],
-    "readout": ["linear", "mlp", "mlpbn"],
-    "task": ["regression"],
+    "readout": ["linear", "mlp"],
+    "task": ["classification"],
 }
 
 config = config_chemberta_tier_2
@@ -56,7 +56,9 @@ print(f"Len of the result {len(result)}")
 
 for i, d in enumerate(result):
 
-    overrides_arg = " ".join([f"{key}={d[key]}" for key in d.keys()])
+    #overrides_arg = " ".join([f"{key}={d[key]}" for key in d.keys()])
+    overrides_arg = " ".join(f"{key}={value}" for key, value in d.items()
+    if not (key == "readout.dropout" and d["readout"] == "linear"))
 
     bsub_script = textwrap.dedent(f"""\
     #!/bin/bash
@@ -93,7 +95,7 @@ for i, d in enumerate(result):
 
     # Results go to runs/<task>/<model>/<timestamp>/ (set in conf/config.yaml).
     #uv run --no-sync python -u finetune.py {overrides_arg} device=cuda frac_data=1
-    uv run --no-sync python -u finetune.py {overrides_arg} device=cuda frac_data=1 hydra.run.dir=runs/chemberta_hparam/tier2_bs16/{d['task']}/job_{i}
+    uv run --no-sync python -u finetune.py {overrides_arg} device=cuda frac_data=1 hydra.run.dir=runs/chemberta_hparam/tier2/{d['task']}/job_{i}
     """)
 
     print(bsub_script)
