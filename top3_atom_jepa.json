@@ -1,89 +1,77 @@
 {
   "regression": [
     {
-      "val_score": 0.6839447383666818,
-      "test_score": 0.7386306791253148,
-      "run_dir": "multirun/2026-11-14/13-21-21/2",
-      "checkpoint": "multirun/2026-11-14/13-21-21/2/best.pt",
+      "val_score": 0.7370372193080506,
+      "test_score": 0.8496314292176871,
+      "run_dir": "atom_jepa_hyperparameter_runs/regression/atom_jepa/2026-11-17_15-56-34",
       "params": {
-        "encoder_lr": 5e-06,
-        "readout_lr": 0.001,
+        "encoder_lr": 0.0001,
+        "readout_lr": 0.0001,
         "batch_size": 16,
         "dropout": 0.1,
-        "weight_decay": 0.0001,
-        "epochs": 20
+        "weight_decay": 0.0001
       }
     },
     {
-      "val_score": 0.6856631064663656,
-      "test_score": 0.7457200318804347,
-      "run_dir": "multirun/2026-11-13/19-03-46/2",
-      "checkpoint": "multirun/2026-11-13/19-03-46/2/best.pt",
+      "val_score": 0.7619789734912534,
+      "test_score": 0.7772491900607879,
+      "run_dir": "atom_jepa_hyperparameter_runs/regression/atom_jepa/2026-11-18_20-52-38",
       "params": {
-        "encoder_lr": 5e-06,
-        "readout_lr": 0.001,
+        "encoder_lr": 1e-05,
+        "readout_lr": 1e-06,
         "batch_size": 16,
-        "dropout": 0.1,
-        "weight_decay": 0.0001,
-        "epochs": 20
+        "dropout": 0.3,
+        "weight_decay": 0.0001
       }
     },
     {
-      "val_score": 0.689253516837379,
-      "test_score": 0.7246362674754178,
-      "run_dir": "multirun/2026-11-14/13-21-21/0",
-      "checkpoint": "multirun/2026-11-14/13-21-21/0/best.pt",
+      "val_score": 0.7623222395869791,
+      "test_score": 0.7544575440989847,
+      "run_dir": "atom_jepa_hyperparameter_runs/regression/atom_jepa/2026-11-18_06-26-29",
       "params": {
-        "encoder_lr": 5e-06,
-        "readout_lr": 0.001,
-        "batch_size": 8,
-        "dropout": 0.1,
-        "weight_decay": 0.0001,
-        "epochs": 20
+        "encoder_lr": 1e-05,
+        "readout_lr": 1e-05,
+        "batch_size": 16,
+        "dropout": 0.3,
+        "weight_decay": 0.0001
       }
     }
   ],
   "classification": [
     {
-      "val_score": 0.31172232767880337,
-      "test_score": 0.2357064955170918,
-      "run_dir": "multirun/2026-11-13/19-05-10/1",
-      "checkpoint": "multirun/2026-11-13/19-05-10/1/best.pt",
+      "val_score": 0.3398590106283289,
+      "test_score": 0.10873936203137993,
+      "run_dir": "atom_jepa_hyperparameter_runs/classification/atom_jepa/2026-11-17_09-04-17",
       "params": {
-        "encoder_lr": 1e-05,
+        "encoder_lr": 0.0001,
         "readout_lr": 0.001,
         "batch_size": 16,
-        "dropout": 0.3,
-        "weight_decay": 0.0001,
-        "epochs": 20
+        "dropout": 0.5,
+        "weight_decay": 0.0001
       }
     },
     {
-      "val_score": 0.2998832351013499,
-      "test_score": 0.2298838783306413,
-      "run_dir": "multirun/2026-11-13/19-05-10/5",
-      "checkpoint": "multirun/2026-11-13/19-05-10/5/best.pt",
+      "val_score": 0.33154225959130906,
+      "test_score": 0.17811299361432067,
+      "run_dir": "atom_jepa_hyperparameter_runs/classification/atom_jepa/2026-11-18_06-25-16",
       "params": {
-        "encoder_lr": 5e-06,
-        "readout_lr": 0.001,
+        "encoder_lr": 1e-05,
+        "readout_lr": 1e-05,
         "batch_size": 16,
         "dropout": 0.3,
-        "weight_decay": 0.0001,
-        "epochs": 20
+        "weight_decay": 0.0001
       }
     },
     {
-      "val_score": 0.29675252821467574,
-      "test_score": 0.14222221530452128,
-      "run_dir": "multirun/2026-11-13/19-05-10/3",
-      "checkpoint": "multirun/2026-11-13/19-05-10/3/best.pt",
+      "val_score": 0.3222328822589233,
+      "test_score": 0.10384352584438176,
+      "run_dir": "atom_jepa_hyperparameter_runs/classification/atom_jepa/2026-11-17_21-02-17",
       "params": {
         "encoder_lr": 1e-05,
-        "readout_lr": 0.0005,
+        "readout_lr": 0.0001,
         "batch_size": 16,
         "dropout": 0.3,
-        "weight_decay": 0.0001,
-        "epochs": 20
+        "weight_decay": 0.0001
       }
     }
   ]
