@@ -14,6 +14,6 @@ frac_data: 1
 
 hydra:
   run:
-    dir: atom_jepa_hyperparameter_runs/${task}/${model.name}/${now:%Y-%m-%d_%H-%M-%S}
+    dir: atom_jepa_hyperparameter_runs/tier2/${task}/${model.name}/${now:%Y-%m-%d_%H-%M-%S}
   job:
     chdir: false
