@@ -41,7 +41,7 @@ class Conformers(Dataset):
 
 
 class AtomJEPAModel(nn.Module):
-    def __init__(self, cfg, readout, n_targets, data_dir, device, task):
+    def __init__(self, cfg, readout, n_targets, data_dir, device):
         super().__init__()
         self.cfg, self.folder = cfg, data_dir / 'conformers'
         self.encoder = AtomJEPA.from_pretrained(cfg.checkpoint, device=device,
