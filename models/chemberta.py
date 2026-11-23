@@ -22,19 +22,12 @@ class ChemBERTaDataset(Dataset):
         return len(self.encodings["input_ids"])
 
 class ChemBERTa(nn.Module):
-    def __init__(self, cfg, readout, n_targets, data_dir, device, task):
+    def __init__(self, cfg, readout, n_targets, data_dir, device):
         super().__init__()
         self.cfg, self.folder = cfg, data_dir / 'features'
 
         config = RobertaConfig.from_pretrained("DeepChem/ChemBERTa-77M-MLM")
         self.tokenizer = RobertaTokenizer.from_pretrained("DeepChem/ChemBERTa-77M-MLM")
-        if task == "classification":
-            config.num_labels = 2
-            config.problem_type = "single_label_classification"
-        if task == "regression":
-            config.num_labels = 1
-            config.problem_type = "regression"
-        
         config.output_hidden_states = True
         self.encoder = RobertaForSequenceClassification.from_pretrained(
             "DeepChem/ChemBERTa-77M-MLM", 
