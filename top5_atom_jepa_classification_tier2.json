@@ -75,5 +75,82 @@
         "frac_data": 1
       }
     }
+  ],
+  "regression": [
+    {
+      "val_score": 0.6690850049101597,
+      "test_score": 0.7557675581613892,
+      "run_dir": "atom_jepa_hyperparameter_runs/tier2/regression/atom_jepa/2026-11-22_03-15-16",
+      "params": {
+        "encoder_lr": 1e-05,
+        "readout_lr": 1e-05,
+        "batch_size": 16,
+        "weight_decay": 0.0001,
+        "freeze_encoder": false,
+        "num_conformers": 5,
+        "readout": "mlp",
+        "frac_data": 1
+      }
+    },
+    {
+      "val_score": 0.6703048629480983,
+      "test_score": 0.7575336202496216,
+      "run_dir": "atom_jepa_hyperparameter_runs/tier2/regression/atom_jepa/2026-11-22_06-36-44",
+      "params": {
+        "encoder_lr": 1e-05,
+        "readout_lr": 1e-05,
+        "batch_size": 16,
+        "weight_decay": 1e-05,
+        "freeze_encoder": false,
+        "num_conformers": 5,
+        "readout": "mlp",
+        "frac_data": 1
+      }
+    },
+    {
+      "val_score": 0.6704331706251849,
+      "test_score": 0.7571559297456675,
+      "run_dir": "atom_jepa_hyperparameter_runs/tier2/regression/atom_jepa/2026-11-22_00-57-29",
+      "params": {
+        "encoder_lr": 1e-05,
+        "readout_lr": 1e-05,
+        "batch_size": 16,
+        "weight_decay": 0.001,
+        "freeze_encoder": false,
+        "num_conformers": 5,
+        "readout": "mlp",
+        "frac_data": 1
+      }
+    },
+    {
+      "val_score": 0.6708300106236708,
+      "test_score": 0.7605017922832618,
+      "run_dir": "atom_jepa_hyperparameter_runs/tier2/regression/atom_jepa/2026-11-21_23-59-47",
+      "params": {
+        "encoder_lr": 1e-05,
+        "readout_lr": 1e-05,
+        "batch_size": 16,
+        "weight_decay": 0.001,
+        "freeze_encoder": false,
+        "num_conformers": 5,
+        "readout": "mlp",
+        "frac_data": 1
+      }
+    },
+    {
+      "val_score": 0.6713257655660532,
+      "test_score": 0.7614111204181001,
+      "run_dir": "atom_jepa_hyperparameter_runs/tier2/regression/atom_jepa/2026-11-22_04-31-48",
+      "params": {
+        "encoder_lr": 1e-05,
+        "readout_lr": 1e-05,
+        "batch_size": 16,
+        "weight_decay": 0.0001,
+        "freeze_encoder": false,
+        "num_conformers": 5,
+        "readout": "mlp",
+        "frac_data": 1
+      }
+    }
   ]
 }
