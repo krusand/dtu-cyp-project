@@ -1,9 +1,9 @@
 import json
 from pathlib import Path
 
-runs = {"classification": [], "regression": []}
+runs = {"classification": [], 'regression': []}
 
-for val_file in Path("atom_jepa_hyperparameter_runs/tier2").rglob("validation_metrics.json"):
+for val_file in Path(f"atom_jepa_hyperparameter_runs/tier2").rglob("validation_metrics.json"):
     run_dir = val_file.parent
     cfg_file = run_dir / "config.json"
     if not cfg_file.exists():
@@ -48,4 +48,4 @@ for task, reverse in [("classification", True), ("regression", False)]:
     for i, r in enumerate(top5[task], 1):
         print(f"  {i}. val={r['val_score']:.4f} | test={r['test_score']} | {r['params']} ({r['run_dir']})")
 
-Path("top5_atom_jepa_classification_tier2.json").write_text(json.dumps(top5, indent=2))
+Path("top5_atom_jepa_tier2.json").write_text(json.dumps(top5, indent=2))

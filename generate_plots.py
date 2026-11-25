@@ -8,14 +8,14 @@ import json
 import seaborn as sns
 from sklearn.metrics import confusion_matrix, matthews_corrcoef
 
-RANKED_RUNS_FILE_PATH = "top5_atom_jepa_classification_tier2.json"
-TASK = "classification"
+RANKED_RUNS_FILE_PATH = "top5_atom_jepa_tier2.json"
+TASK = "regression"
 METRICS = {
     'regression': [ "CYP1A2_pIC50_direct_inhibition", "CYP2C9_pIC50_direct_inhibition", "CYP2D6_pIC50_direct_inhibition", "CYP3A4_pIC50_direct_inhibition"],
     'classification': ["CYP2D6_is_TDI", "CYP3A4_is_TDI"]
 }
 DATA_PATH = Path(f"data/{TASK}")
-PLOT_FILE_NAME = "atom_jepa_confusion_matrix"
+PLOT_FILE_NAME = "atom_jepa_residuals"
 
 def test_prediction_path(path: Path):
     assert os.path.exists(path), f"Folder {path} does not exists"
