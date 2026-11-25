@@ -108,6 +108,9 @@ def train_torch(cfg, train, val, targets, task, data, out):
     """Trains a torch model with the epoch loop; returns a function frame -> predictions."""
     if cfg.train.epochs < 1 or cfg.train.batch_size < 1:
         raise ValueError('epochs and batch_size must be positive')
+    unfreeze_encoder_after_epochs = int(cfg.model.freeze_encoder)
+    cfg.model.freeze_encoder = bool(cfg.model.freeze_encoder)
+
     model = MODELS[cfg.model.type](cfg.model, cfg.readout, len(targets), data, cfg.device)
     model.fit_preprocessing(train)  # Feature scaling etc. is fitted on the training split ONLY.
     mean = torch.zeros(len(targets), device=model.device)
@@ -124,6 +127,8 @@ def train_torch(cfg, train, val, targets, task, data, out):
     best = float('inf')
     patience_idx = 0
     for epoch in range(1, cfg.train.epochs + 1):
+        if unfreeze_encoder_after_epochs < epoch:
+            cfg.model.freeze_encoder = False
         model.train()
         loss_sum, observed = 0., 0
         for batch in tqdm(train_loader):
