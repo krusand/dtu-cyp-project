@@ -6,15 +6,16 @@ import pandas as pd
 from pathlib import Path
 import json
 import seaborn as sns
+from sklearn.metrics import confusion_matrix, matthews_corrcoef
 
-RANKED_RUNS_FILE_PATH = "top5_atom_jepa_regression_tier2.json"
-TASK = "regression"
+RANKED_RUNS_FILE_PATH = "top5_atom_jepa_classification_tier2.json"
+TASK = "classification"
 METRICS = {
     'regression': [ "CYP1A2_pIC50_direct_inhibition", "CYP2C9_pIC50_direct_inhibition", "CYP2D6_pIC50_direct_inhibition", "CYP3A4_pIC50_direct_inhibition"],
-    'classification': []
+    'classification': ["CYP2D6_is_TDI", "CYP3A4_is_TDI"]
 }
 DATA_PATH = Path(f"data/{TASK}")
-PLOT_FILE_NAME = "atom_jepa_residuals"
+PLOT_FILE_NAME = "atom_jepa_confusion_matrix"
 
 def test_prediction_path(path: Path):
     assert os.path.exists(path), f"Folder {path} does not exists"
@@ -48,8 +49,44 @@ def plot_residuals(errors, split):
     plt.savefig(f'plots/{PLOT_FILE_NAME}_{split}.png', dpi=144)
 
 
-def plot_confusion_matrix():
-    raise NotImplementedError
+def plot_confusion_matrix(actual, preds, split):
+    merged = actual.merge(
+        preds, how='left', left_on=['Molecule_Name', 'SMILES'], right_on=['Molecule_Name', 'SMILES']
+    )
+    targets = METRICS[TASK]
+
+    fig, axs = plt.subplots(nrows=1, ncols=len(targets), figsize=(4.5 * len(targets), 4))
+    if len(targets) == 1:
+        axs = [axs]
+
+    for ax, metric in zip(axs, targets):
+        valid = merged[[metric, metric + '_hat']].dropna()
+        y_true = valid[metric].astype(int)
+        y_pred = (valid[metric + '_hat'] >= 0.5).astype(int)
+
+        cm = confusion_matrix(y_true, y_pred, normalize='true')
+        mcc = matthews_corrcoef(y_true, y_pred)
+
+        sns.heatmap(
+            cm,
+            annot=True,
+            fmt='.2f',
+            cmap='Blues',
+            cbar=False,
+            vmin=0,
+            vmax=1,
+            xticklabels=['Non-inh.', 'Inhib.'],
+            yticklabels=['Non-inh.', 'Inhib.'],
+            ax=ax,
+        )
+        ax.set_title(f"{metric}\n(n={len(valid)}, MCC={mcc:.2f}) : {split.upper()} set")
+        ax.set_xlabel("Predicted label")
+        ax.set_ylabel("True label")
+
+    os.makedirs("plots", exist_ok=True)
+    plt.tight_layout()
+    plt.savefig(f'plots/atom_jepa_confusion_matrix_{split}.png', dpi=144)
+    plt.close()
 
 def main():
     with open(RANKED_RUNS_FILE_PATH, 'r') as fp:
@@ -84,7 +121,8 @@ def main():
         plot_residuals(test_errors, split='test')
 
     elif TASK == 'classification':
-        plot_confusion_matrix()
+        plot_confusion_matrix(val_actual, val_preds, split='val')
+        plot_confusion_matrix(test_actual, test_preds, split='test')
 
 
 if __name__ == '__main__':

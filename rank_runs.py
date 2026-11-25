@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-runs = {"classification": []}
+runs = {"classification": [], "regression": []}
 
 for val_file in Path("atom_jepa_hyperparameter_runs/tier2").rglob("validation_metrics.json"):
     run_dir = val_file.parent
@@ -42,7 +42,7 @@ for val_file in Path("atom_jepa_hyperparameter_runs/tier2").rglob("validation_me
     })
 
 top5 = {}
-for task, reverse in [("classification", True)]:
+for task, reverse in [("classification", True), ("regression", False)]:
     top5[task] = sorted(runs[task], key=lambda r: r["val_score"], reverse=reverse)[:5]
     print(f"\nTop 5 {task}:")
     for i, r in enumerate(top5[task], 1):
